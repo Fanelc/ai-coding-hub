@@ -1,0 +1,102 @@
+{
+  "intro": {
+    "title": "Learning AI coding — for a Salesforce Architect",
+    "body": "You already know how to ship enterprise software: declarative vs pro-code, governor limits, metadata, CI/CD, security. The AI coding stack is a new runtime with the same trade-offs in different clothes. This hub gives you a reading order, a glossary that maps new terms to Salesforce ones you already know, and a live feed of the best writers in the space. Read the modules top-to-bottom once, then let the feed keep you current."
+  },
+
+  "modules": [
+    {
+      "id": "m1",
+      "title": "1 · Mental model: what an LLM actually is",
+      "why": "Before agents and spec-driven dev, you need a correct intuition for the engine. Most confusion downstream comes from treating an LLM like a database or a deterministic function — it is neither.",
+      "sf_bridge": "Think of an LLM as a stateless Apex method with no access to your org, whose only inputs are the text you pass in. Every call starts fresh. All the cleverness in tools like Cursor or Claude Code is arranging what text gets passed in.",
+      "resources": [
+        {"title": "Things we learned about LLMs in 2024", "author": "Simon Willison", "duration": "25 min read", "url": "https://simonwillison.net/2024/Dec/31/llms-in-2024/", "summary": "Best single-page catch-up on how LLMs actually work today. Opinionated, concrete, no hype."},
+        {"title": "Intro to large language models (1hr talk)", "author": "Andrej Karpathy", "duration": "60 min video", "url": "https://www.youtube.com/watch?v=zjkBMFhNj_g", "summary": "The definitive beginner-but-serious explainer. Watch at 1.25x."},
+        {"title": "Prompt engineering (Anthropic docs)", "author": "Anthropic", "duration": "30 min read", "url": "https://docs.claude.com/en/docs/build-with-claude/prompt-engineering/overview", "summary": "Vendor docs, but the clearest short guide to writing prompts that get consistent output."}
+      ]
+    },
+    {
+      "id": "m2",
+      "title": "2 · The context window is your governor limit",
+      "why": "Everything in agentic coding — retrieval, MCP, compaction, subagents — exists because of this one constraint. Understand it and the rest of the ecosystem reads like obvious engineering.",
+      "sf_bridge": "Context window ≈ the total SOQL rows + heap you have per transaction. It's finite, it's priced, and if you blow past it the work fails. Every abstraction on top is a strategy to stay under limit.",
+      "resources": [
+        {"title": "Prompt caching explained", "author": "Anthropic", "duration": "15 min read", "url": "https://docs.claude.com/en/docs/build-with-claude/prompt-caching", "summary": "Why agents reuse a system prompt 50 times per session instead of rebuilding it. Cost model maps 1:1 to DML caching intuitions."},
+        {"title": "How long contexts fail", "author": "Lance Martin", "duration": "20 min read", "url": "https://rlancemartin.github.io/2025/06/23/context_engineering/", "summary": "Why 'just give the model the whole codebase' doesn't work, and what does."}
+      ]
+    },
+    {
+      "id": "m3",
+      "title": "3 · Agents — what the word actually means",
+      "why": "'Agent' is overloaded. In practice it's a loop: model writes output → some output is a tool call → tool runs → result fed back in → repeat until done. That's it. Everything else is UX.",
+      "sf_bridge": "An agent ≈ a Flow that can loop, call Apex actions (tools), and decide its own next step. The 'model' replaces the decision nodes you'd build declaratively.",
+      "resources": [
+        {"title": "Building effective agents", "author": "Anthropic", "duration": "25 min read", "url": "https://www.anthropic.com/engineering/building-effective-agents", "summary": "The canonical explainer. Distinguishes workflows (deterministic pipelines) from agents (model drives the loop). Required reading."},
+        {"title": "What are AI agents really?", "author": "Simon Willison", "duration": "10 min read", "url": "https://simonwillison.net/2025/May/22/tools-in-a-loop/", "summary": "Cuts through the marketing. 'Tools in a loop' — that's the whole thing."},
+        {"title": "LLM Powered Autonomous Agents", "author": "Lilian Weng", "duration": "40 min read", "url": "https://lilianweng.github.io/posts/2023-06-23-agent/", "summary": "Deeper, more technical. Skip on first pass, return when you want the architecture taxonomy."}
+      ]
+    },
+    {
+      "id": "m4",
+      "title": "4 · Spec-driven development",
+      "why": "The hottest paradigm of 2025. Instead of prompting your way to code, you write a precise spec; the agent implements it, writes tests, and iterates. Closer to how you already work as an architect — design doc first, code after.",
+      "sf_bridge": "You already do spec-driven dev — it's called the solution design document before a build. The new part: the agent reads the spec and produces the org metadata + Apex. Your design discipline transfers directly; in fact it's your biggest advantage over devs who prompt ad-hoc.",
+      "resources": [
+        {"title": "Spec-driven development with AI", "author": "GitHub", "duration": "20 min read", "url": "https://github.blog/ai-and-ml/generative-ai/spec-driven-development-with-ai-get-started-with-a-new-open-source-toolkit/", "summary": "Introduces GitHub's open-source Spec Kit. The clearest practical walkthrough of the workflow."},
+        {"title": "Spec Kit (GitHub repo)", "author": "GitHub", "duration": "browse", "url": "https://github.com/github/spec-kit", "summary": "The toolkit itself. Read the README, clone it, run through the example."},
+        {"title": "Specifications: the missing link", "author": "Sean Goedecke", "duration": "15 min read", "url": "https://www.seangoedecke.com/spec-first-ai-development/", "summary": "Why specs beat prompts for non-trivial work. Short, opinionated, right."}
+      ]
+    },
+    {
+      "id": "m5",
+      "title": "5 · Tools & MCP — how agents touch the real world",
+      "why": "An LLM alone can only produce text. Tools turn it into something that reads files, queries databases, calls APIs. MCP (Model Context Protocol) is the emerging standard for plugging tools in — think of it as the REST/SOAP layer of the agent era.",
+      "sf_bridge": "MCP ≈ Named Credentials + External Services in Salesforce. You register a capability once, then any agent (like any Flow) can call it with typed inputs. The interesting part: you can expose your own org via MCP and let agents read/write metadata.",
+      "resources": [
+        {"title": "Introducing the Model Context Protocol", "author": "Anthropic", "duration": "10 min read", "url": "https://www.anthropic.com/news/model-context-protocol", "summary": "The announcement. Short — read it first for the 'why'."},
+        {"title": "MCP spec & SDK docs", "author": "Anthropic", "duration": "30 min browse", "url": "https://modelcontextprotocol.io/", "summary": "The protocol itself. Skim the architecture page; the transport details can wait."},
+        {"title": "Tool use in practice", "author": "Anthropic", "duration": "20 min read", "url": "https://docs.claude.com/en/docs/agents-and-tools/tool-use/overview", "summary": "How to actually wire up tools in code. Concrete examples."}
+      ]
+    },
+    {
+      "id": "m6",
+      "title": "6 · The coding-agent tooling landscape",
+      "why": "The market moves monthly. This is less 'read once' and more 'know what exists so you can pick'. Don't try all of them — pick one terminal-native and one IDE-native, use them for 2 weeks each.",
+      "sf_bridge": "This is the 'which IDE + which deployment tool' question of the AI era. Similar fatigue, similar vendor lock-in concerns. Pick the one that matches your workflow, not the loudest on Twitter.",
+      "resources": [
+        {"title": "Claude Code overview", "author": "Anthropic", "duration": "15 min read", "url": "https://docs.claude.com/en/docs/claude-code/overview", "summary": "Terminal-native agent. The one you're using right now. Strong for spec-driven work."},
+        {"title": "Cursor docs", "author": "Cursor", "duration": "15 min browse", "url": "https://docs.cursor.com/", "summary": "IDE-native. VS Code fork with agents built in. Good for incremental edits."},
+        {"title": "Aider (open source CLI agent)", "author": "Aider", "duration": "10 min read", "url": "https://aider.chat/", "summary": "Worth knowing for comparison — open source, git-integrated, works with any model."},
+        {"title": "State of AI coding tools 2025", "author": "Latent Space", "duration": "browse", "url": "https://www.latent.space/", "summary": "Podcast + blog. Subscribe for ongoing updates — the landscape is live."}
+      ]
+    },
+    {
+      "id": "m7",
+      "title": "7 · Evals & production concerns",
+      "why": "Once you build something with an agent, how do you know it works — not just today, but after the model updates next month? This is the part enterprises hit a wall on.",
+      "sf_bridge": "Evals ≈ your Apex test classes + regression suite, but for probabilistic output. You check behavior across a test set, not a single assertion. Without them, you're shipping to prod without sandbox testing.",
+      "resources": [
+        {"title": "Your AI product needs evals", "author": "Hamel Husain", "duration": "25 min read", "url": "https://hamel.dev/blog/posts/evals/", "summary": "The definitive post on eval-driven development. Practical, not academic."},
+        {"title": "A field guide to rapidly improving AI products", "author": "Hamel Husain & Shreya Shankar", "duration": "30 min read", "url": "https://hamel.dev/blog/posts/field-guide/", "summary": "How to move from prototype to production. What to measure, what to ignore."}
+      ]
+    }
+  ],
+
+  "glossary": [
+    {"term": "Context window", "definition": "The total text (prompt + history + tool results) the model can 'see' in one call. Measured in tokens (~0.75 words). Bigger = more expensive and slower.", "sf": "Governor limit for a single transaction."},
+    {"term": "Token", "definition": "The unit of text the model processes. 1 token ≈ 4 characters of English. You pay per token in and out.", "sf": "API call count — metered and priced per unit."},
+    {"term": "System prompt", "definition": "Instructions given to the model before the user says anything. Sets role, rules, tone.", "sf": "Org-wide default settings applied to every session."},
+    {"term": "Tool / function call", "definition": "The model outputs a structured request to run a named function with typed args. The runtime executes it and feeds the result back.", "sf": "Invocable Apex action called from a Flow."},
+    {"term": "MCP (Model Context Protocol)", "definition": "Open protocol for exposing tools and data sources to any agent, regardless of model vendor.", "sf": "Named Credentials + External Services — a standard way to plug an external capability into any consumer."},
+    {"term": "Agent", "definition": "A loop that runs the model, lets it call tools, feeds results back, and repeats until a goal is reached.", "sf": "A Flow that can loop and call Apex actions, where the decision logic is the LLM instead of declarative rules."},
+    {"term": "Subagent", "definition": "A separate agent invocation spawned by a parent agent to handle a subtask with its own fresh context window.", "sf": "Queueable chain — offload work to keep the parent transaction lean."},
+    {"term": "Prompt caching", "definition": "Reusing the same system prompt / file contents across calls so you're only charged (and delayed by) the new part.", "sf": "Platform cache — store the expensive-to-compute prefix once, reuse it."},
+    {"term": "Context compaction", "definition": "Summarizing old conversation turns to fit under the context limit when a session runs long.", "sf": "Archiving old records to keep a live table performant."},
+    {"term": "Spec-driven development", "definition": "Write a precise specification first; the agent generates implementation + tests + iterates until the spec is satisfied.", "sf": "Solution design document → build handoff, but the agent is the dev."},
+    {"term": "Eval", "definition": "A test suite for probabilistic output. Run the same prompt across many cases and measure a quality metric.", "sf": "Apex test class + regression pack for AI output."},
+    {"term": "RAG (Retrieval-Augmented Generation)", "definition": "Fetch relevant documents at query time and include them in the prompt, so the model answers from your data instead of memory.", "sf": "SOQL + formula — pull the right records, then reason over them."},
+    {"term": "Embedding", "definition": "A vector representation of a chunk of text. Used to find semantically similar content (the 'retrieval' in RAG).", "sf": "A hashed/indexed field you use for fuzzy lookup — but the similarity is semantic, not literal."},
+    {"term": "Hallucination", "definition": "When a model produces confident-sounding output that is factually wrong. Reduced (not eliminated) by retrieval, tool use, and evals.", "sf": "A Flow path that runs silently with the wrong filter — looks fine, gives the wrong answer."}
+  ]
+}

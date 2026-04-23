@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#0b0f1e">
+  <title>AI Coding Hub</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://rsms.me/">
+  <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+</head>
+<body>
+
+  <div class="ambient" aria-hidden="true">
+    <div class="blob b1"></div>
+    <div class="blob b2"></div>
+    <div class="blob b3"></div>
+    <div class="blob b4"></div>
+    <div class="grain"></div>
+  </div>
+
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark">
+        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+          <defs>
+            <linearGradient id="mark" x1="0" y1="0" x2="24" y2="24" gradientUnits="userSpaceOnUse">
+              <stop offset="0" stop-color="#7c5cff"/>
+              <stop offset=".5" stop-color="#00c2ff"/>
+              <stop offset="1" stop-color="#00e3b7"/>
+            </linearGradient>
+          </defs>
+          <path d="M12 2 L22 12 L12 22 L2 12 Z" fill="url(#mark)"/>
+          <circle cx="12" cy="12" r="3" fill="#fff" opacity=".9"/>
+        </svg>
+      </span>
+      <span class="brand-name">AI Coding Hub</span>
+    </div>
+    <nav class="nav-tabs" role="tablist">
+      <button class="nav-tab active" data-tab="read" role="tab">Read</button>
+      <button class="nav-tab" data-tab="feed" role="tab">Feed</button>
+      <button class="nav-tab" data-tab="glossary" role="tab">Glossary</button>
+    </nav>
+  </header>
+
+  <main>
+
+    <!-- ════════════════════ READ ════════════════════ -->
+    <section id="view-read" class="view" role="tabpanel">
+
+      <section class="hero">
+        <div class="hero-kicker">The architect's reading path · 2026</div>
+        <h1 class="hero-title">
+          Learn AI&nbsp;coding
+          <em>without the hype.</em>
+        </h1>
+        <p class="hero-lede">
+          Seven modules for a Salesforce architect who already ships enterprise software
+          and wants to understand agents, spec-driven development, and LLM engineering
+          from first principles.
+        </p>
+        <div class="hero-stats">
+          <div><b>7</b><span>modules</span></div>
+          <div><b>≈3h</b><span>read time</span></div>
+          <div><b>22</b><span>curated sources</span></div>
+        </div>
+      </section>
+
+      <section class="path" aria-label="Reading path"></section>
+
+      <section class="modules-bento" id="modules-bento"></section>
+
+    </section>
+
+    <!-- ════════════════════ FEED ════════════════════ -->
+    <section id="view-feed" class="view hidden" role="tabpanel">
+      <section class="feed-hero">
+        <h2>Live signal.</h2>
+        <p>Curated writers + HN filters, refreshed on demand. Filter by track.</p>
+      </section>
+
+      <div class="chip-rail" role="tablist" aria-label="Feed filters">
+        <button class="chip active" data-track="all">All</button>
+        <button class="chip" data-track="fundamentals">Fundamentals</button>
+        <button class="chip" data-track="agents">Agents</button>
+        <button class="chip" data-track="spec_driven">Spec-Driven</button>
+        <button class="chip" data-track="tools">Tools</button>
+        <span class="chip-spacer"></span>
+        <button class="chip chip-action" id="btn-refresh-all">↻ Refresh</button>
+      </div>
+
+      <div class="feed-updated" id="feed-updated"></div>
+      <div class="feed-grid" id="feed-grid"></div>
+    </section>
+
+    <!-- ════════════════════ GLOSSARY ════════════════════ -->
+    <section id="view-glossary" class="view hidden" role="tabpanel">
+      <section class="gloss-hero">
+        <h2>Glossary.</h2>
+        <p>Every new term mapped to the Salesforce concept you already know.</p>
+      </section>
+
+      <div class="search-wrap">
+        <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true">
+          <circle cx="9" cy="9" r="6" fill="none" stroke="currentColor" stroke-width="1.8"/>
+          <path d="M13.5 13.5 L17 17" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+        <input id="gloss-search" type="search" placeholder="Search a term…" autocomplete="off">
+      </div>
+
+      <div class="gloss-grid" id="gloss-grid"></div>
+    </section>
+
+  </main>
+
+  <!-- Module bottom sheet -->
+  <div class="sheet-backdrop" id="sheet-backdrop" hidden></div>
+  <aside class="sheet" id="sheet" hidden aria-modal="true" role="dialog">
+    <div class="sheet-handle" aria-hidden="true"></div>
+    <button class="sheet-close" id="sheet-close" aria-label="Close">×</button>
+    <div class="sheet-body" id="sheet-body"></div>
+  </aside>
+
+  <script src="app.js"></script>
+</body>
+</html>
