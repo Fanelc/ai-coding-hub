@@ -48,18 +48,6 @@ const TRACK_LABEL = {
   tools: "Tools",
 };
 
-const MODULE_TAGS = [
-  "Foundation", "Foundation", "Core", "Practice", "Core", "Tools", "Production",
-];
-
-const MODULE_LAYOUT = [
-  "wide hero-card", "", "", "wide", "", "", "wide",
-];
-
-const TIME_ESTIMATES = [
-  "≈2h", "≈35 min", "≈1h 15", "≈50 min", "≈1h", "≈40 min", "≈1h",
-];
-
 // ══════════ Tab switching ══════════
 function switchTab(tab) {
   state.activeTab = tab;
@@ -72,6 +60,7 @@ function switchTab(tab) {
   window.scrollTo({ top: 0, behavior: "smooth" });
 
   if (tab === "feed" && !state.feeds.fundamentals) loadAllFeeds();
+  if (tab === "stack" && state.learning) renderStack();
   observeReveal();
 }
 
@@ -98,54 +87,130 @@ async function loadLearning() {
   state.learning = data;
   renderPath();
   renderModules();
+  renderStack();
   renderGlossary();
   observeReveal();
 }
 
 function renderPath() {
-  const { modules } = state.learning;
+  const { tracks, modules } = state.learning;
   const path = document.querySelector(".path");
-  path.innerHTML = modules
-    .map((m, i) => {
-      const short = m.title.replace(/^\d+\s*·\s*/, "").split(":")[0];
-      return `
-        ${i > 0 ? '<span class="path-line"></span>' : ""}
-        <div class="path-node">
-          <button class="path-dot" data-module="${i}" title="${escapeAttr(m.title)}">${i + 1}</button>
-        </div>
-      `;
-    })
+  if (!tracks || !path) return;
+  // Build track-shortcut chips that scroll to the matching section
+  const counts = {};
+  modules.forEach((m) => { counts[m.track] = (counts[m.track] || 0) + 1; });
+  path.innerHTML = tracks
+    .map((t, i) => `
+      ${i > 0 ? '<span class="path-line"></span>' : ""}
+      <button class="path-track" data-track="${escapeAttr(t.id)}" title="${escapeAttr(t.blurb)}">
+        <span class="path-track-num">${String(i + 1).padStart(2, "0")}</span>
+        <span class="path-track-label">${escapeHtml(t.label)}</span>
+        <span class="path-track-count">${counts[t.id] || 0}</span>
+      </button>
+    `)
     .join("");
-  path.querySelectorAll(".path-dot").forEach((btn) =>
-    btn.addEventListener("click", () => openModuleSheet(+btn.dataset.module)),
+  path.querySelectorAll(".path-track").forEach((btn) =>
+    btn.addEventListener("click", () => {
+      const sec = document.querySelector(`[data-track-section="${btn.dataset.track}"]`);
+      if (sec) sec.scrollIntoView({ behavior: "smooth", block: "start" });
+    }),
   );
 }
 
 function renderModules() {
-  const { modules } = state.learning;
+  const { tracks, modules } = state.learning;
   const root = document.getElementById("modules-bento");
-  root.innerHTML = modules
-    .map((m, i) => {
-      const short = m.title.replace(/^\d+\s*·\s*/, "");
+  if (!root) return;
+
+  // Group modules by track, in track-array order
+  const byTrack = {};
+  modules.forEach((m, i) => {
+    (byTrack[m.track] || (byTrack[m.track] = [])).push({ ...m, _index: i });
+  });
+
+  root.innerHTML = tracks
+    .map((t) => {
+      const items = byTrack[t.id] || [];
+      const cards = items
+        .map((m) => {
+          const short = m.title.replace(/^\d+\s*·\s*/, "");
+          const num = String(m._index + 1).padStart(2, "0");
+          return `
+            <article class="module-card reveal" data-module="${m._index}">
+              <div class="module-head">
+                <span class="module-num">${num}</span>
+                <span class="module-chip">${escapeHtml(m.tag || "")}</span>
+              </div>
+              <h3 class="module-title">${escapeHtml(short)}</h3>
+              <p class="module-why">${escapeHtml(m.why)}</p>
+              <div class="module-meta">
+                <span>${escapeHtml(m.time || "")}</span>
+                <span>${m.resources.length} resources</span>
+              </div>
+            </article>
+          `;
+        })
+        .join("");
       return `
-        <article class="module-card reveal ${MODULE_LAYOUT[i]}" data-module="${i}">
-          <div class="module-head">
-            <span class="module-num">${String(i + 1).padStart(2, "0")}</span>
-            <span class="module-chip">${MODULE_TAGS[i]}</span>
-          </div>
-          <h3 class="module-title">${escapeHtml(short)}</h3>
-          <p class="module-why">${escapeHtml(m.why)}</p>
-          <div class="module-meta">
-            <span>${TIME_ESTIMATES[i]}</span>
-            <span>${m.resources.length} resources</span>
-          </div>
-        </article>
+        <section class="track-section reveal" data-track-section="${escapeAttr(t.id)}">
+          <header class="track-header">
+            <h2 class="track-title">${escapeHtml(t.label)}</h2>
+            <p class="track-blurb">${escapeHtml(t.blurb)} · ${items.length} modules</p>
+          </header>
+          <div class="track-grid">${cards}</div>
+        </section>
       `;
     })
     .join("");
+
   root.querySelectorAll(".module-card").forEach((card) => {
     card.addEventListener("click", () => openModuleSheet(+card.dataset.module));
   });
+}
+
+// ══════════ Stack tab ══════════
+function renderStack() {
+  const root = document.getElementById("stack-grid");
+  if (!root || !state.learning?.stack) return;
+  const stack = state.learning.stack;
+
+  // Group by category, preserve first-seen order
+  const order = [];
+  const groups = {};
+  stack.forEach((s) => {
+    if (!groups[s.category]) { groups[s.category] = []; order.push(s.category); }
+    groups[s.category].push(s);
+  });
+
+  root.innerHTML = order
+    .map((cat) => {
+      const items = groups[cat]
+        .map(
+          (s) => `
+        <a class="stack-card reveal" href="${escapeAttr(s.url)}" target="_blank" rel="noopener">
+          <div class="stack-card-head">
+            <span class="stack-tag">${escapeHtml(s.tag || "")}</span>
+            <span class="stack-license">${escapeHtml(s.license || "")}</span>
+          </div>
+          <h3 class="stack-name">${escapeHtml(s.name)}</h3>
+          <div class="stack-vendor">${escapeHtml(s.vendor || "")}</div>
+          <p class="stack-oneliner">${escapeHtml(s.oneliner)}</p>
+          ${s.sf ? `<p class="stack-sf"><span class="sf-bridge-label">SF</span> ${escapeHtml(s.sf)}</p>` : ""}
+        </a>
+      `,
+        )
+        .join("");
+      return `
+        <section class="stack-section reveal">
+          <header class="track-header">
+            <h2 class="track-title">${escapeHtml(cat)}</h2>
+            <p class="track-blurb">${groups[cat].length} ${groups[cat].length === 1 ? "entry" : "entries"}</p>
+          </header>
+          <div class="stack-cards">${items}</div>
+        </section>
+      `;
+    })
+    .join("");
 }
 
 // ══════════ Module sheet ══════════
@@ -160,8 +225,8 @@ function openModuleSheet(i) {
   sheetBody.innerHTML = `
     <div class="sheet-kicker">
       <span class="module-num">${String(i + 1).padStart(2, "0")}</span>
-      <span class="module-chip">${MODULE_TAGS[i]}</span>
-      <span class="module-chip">${TIME_ESTIMATES[i]}</span>
+      <span class="module-chip">${escapeHtml(m.tag || "")}</span>
+      <span class="module-chip">${escapeHtml(m.time || "")}</span>
     </div>
     <h2 class="sheet-title">${escapeHtml(short)}</h2>
     <p class="sheet-why">${escapeHtml(m.why)}</p>

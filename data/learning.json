@@ -1,86 +1,544 @@
 {
   "intro": {
-    "title": "Learning AI coding — for a Salesforce Architect",
-    "body": "You already know how to ship enterprise software: declarative vs pro-code, governor limits, metadata, CI/CD, security. The AI coding stack is a new runtime with the same trade-offs in different clothes. This hub gives you a reading order, a glossary that maps new terms to Salesforce ones you already know, and a live feed of the best writers in the space. Read the modules top-to-bottom once, then let the feed keep you current."
+    "title": "AI coding — for a Salesforce Architect",
+    "body": "You already ship enterprise software: declarative vs pro-code, governor limits, metadata, CI/CD, security. The AI stack is a new runtime with the same trade-offs in different clothes. Read the modules in track order; lean on the Stack tab to pick a model + tool; let the Feed keep you current."
   },
 
+  "tracks": [
+    { "id": "foundations", "label": "Foundations",   "blurb": "How LLMs actually work" },
+    { "id": "models",      "label": "Models",        "blurb": "The 2026 model landscape" },
+    { "id": "agents",      "label": "Agents",        "blurb": "Loops, tools, memory, orchestration" },
+    { "id": "tools",       "label": "Tools & MCP",   "blurb": "How agents touch the real world" },
+    { "id": "spec",        "label": "Spec-Driven",   "blurb": "Design doc → working code" },
+    { "id": "ide",         "label": "Coding Tools",  "blurb": "CLIs and agentic IDEs" },
+    { "id": "prod",        "label": "Production",    "blurb": "Evals, observability, security, cost" }
+  ],
+
   "modules": [
-    {
-      "id": "m1",
+    { "id": "m01", "track": "foundations", "tag": "Foundation", "time": "≈25 min",
       "title": "1 · Mental model: what an LLM actually is",
       "why": "Before agents and spec-driven dev, you need a correct intuition for the engine. Most confusion downstream comes from treating an LLM like a database or a deterministic function — it is neither.",
       "sf_bridge": "Think of an LLM as a stateless Apex method with no access to your org, whose only inputs are the text you pass in. Every call starts fresh. All the cleverness in tools like Cursor or Claude Code is arranging what text gets passed in.",
       "resources": [
         {"title": "Things we learned about LLMs in 2024", "author": "Simon Willison", "duration": "25 min read", "url": "https://simonwillison.net/2024/Dec/31/llms-in-2024/", "summary": "Best single-page catch-up on how LLMs actually work today. Opinionated, concrete, no hype."},
-        {"title": "Intro to large language models (1hr talk)", "author": "Andrej Karpathy", "duration": "60 min video", "url": "https://www.youtube.com/watch?v=zjkBMFhNj_g", "summary": "The definitive beginner-but-serious explainer. Watch at 1.25x."},
-        {"title": "Prompt engineering (Anthropic docs)", "author": "Anthropic", "duration": "30 min read", "url": "https://docs.claude.com/en/docs/build-with-claude/prompt-engineering/overview", "summary": "Vendor docs, but the clearest short guide to writing prompts that get consistent output."}
+        {"title": "Intro to large language models", "author": "Andrej Karpathy", "duration": "60 min video", "url": "https://www.youtube.com/watch?v=zjkBMFhNj_g", "summary": "The definitive beginner-but-serious explainer. Watch at 1.25x."},
+        {"title": "Prompt engineering", "author": "Anthropic", "duration": "30 min read", "url": "https://docs.claude.com/en/docs/build-with-claude/prompt-engineering/overview", "summary": "Vendor docs, but the clearest short guide to writing prompts that get consistent output."}
       ]
     },
-    {
-      "id": "m2",
-      "title": "2 · The context window is your governor limit",
-      "why": "Everything in agentic coding — retrieval, MCP, compaction, subagents — exists because of this one constraint. Understand it and the rest of the ecosystem reads like obvious engineering.",
-      "sf_bridge": "Context window ≈ the total SOQL rows + heap you have per transaction. It's finite, it's priced, and if you blow past it the work fails. Every abstraction on top is a strategy to stay under limit.",
+    { "id": "m02", "track": "foundations", "tag": "Foundation", "time": "≈40 min",
+      "title": "2 · Tokens, embeddings & attention",
+      "why": "Tokens are the atomic unit of cost and context. Embeddings store meaning as numbers. Attention is how the model decides what matters. You need a feel for all three before reading anything else.",
+      "sf_bridge": "Tokens ≈ API call units, metered. Embeddings ≈ semantic indexes for fuzzy matching across records. Attention ≈ a SOQL WHERE clause the model writes itself, on the fly, over your prompt.",
       "resources": [
-        {"title": "Prompt caching explained", "author": "Anthropic", "duration": "15 min read", "url": "https://docs.claude.com/en/docs/build-with-claude/prompt-caching", "summary": "Why agents reuse a system prompt 50 times per session instead of rebuilding it. Cost model maps 1:1 to DML caching intuitions."},
+        {"title": "The Illustrated Transformer", "author": "Jay Alammar", "duration": "20 min read", "url": "https://jalammar.github.io/illustrated-transformer/", "summary": "The classic visual explainer. Skip the math, keep the intuition."},
+        {"title": "Attention in transformers, visually", "author": "3Blue1Brown", "duration": "30 min video", "url": "https://www.youtube.com/watch?v=eMlx5fFNoYc", "summary": "Best video on what attention actually computes."},
+        {"title": "Embeddings guide", "author": "OpenAI", "duration": "15 min read", "url": "https://platform.openai.com/docs/guides/embeddings", "summary": "The 'how to use them' side. Vectors → similarity → retrieval."}
+      ]
+    },
+    { "id": "m03", "track": "foundations", "tag": "Core", "time": "≈30 min",
+      "title": "3 · The context window is your governor limit",
+      "why": "Everything in agentic coding — retrieval, MCP, compaction, subagents — exists because of this one constraint. Understand it and the rest reads like obvious engineering.",
+      "sf_bridge": "Context window ≈ total SOQL rows + heap per transaction. Finite, priced, and if you blow past it the work fails. Every abstraction on top is a strategy to stay under limit.",
+      "resources": [
+        {"title": "Prompt caching", "author": "Anthropic", "duration": "15 min read", "url": "https://docs.claude.com/en/docs/build-with-claude/prompt-caching", "summary": "Why agents reuse a system prompt 50× per session. Cost model maps 1:1 to platform cache."},
         {"title": "How long contexts fail", "author": "Lance Martin", "duration": "20 min read", "url": "https://rlancemartin.github.io/2025/06/23/context_engineering/", "summary": "Why 'just give the model the whole codebase' doesn't work, and what does."}
       ]
     },
-    {
-      "id": "m3",
-      "title": "3 · Agents — what the word actually means",
-      "why": "'Agent' is overloaded. In practice it's a loop: model writes output → some output is a tool call → tool runs → result fed back in → repeat until done. That's it. Everything else is UX.",
-      "sf_bridge": "An agent ≈ a Flow that can loop, call Apex actions (tools), and decide its own next step. The 'model' replaces the decision nodes you'd build declaratively.",
+    { "id": "m04", "track": "foundations", "tag": "Foundation", "time": "≈20 min",
+      "title": "4 · Temperature, sampling & determinism",
+      "why": "Same prompt, different output. Knowing why — and how to dial it down — is how you write reliable agent loops.",
+      "sf_bridge": "Temperature ≈ deciding whether a formula returns the same value every call or accepts noise. Production agents usually want temperature near zero — like deterministic Apex.",
       "resources": [
-        {"title": "Building effective agents", "author": "Anthropic", "duration": "25 min read", "url": "https://www.anthropic.com/engineering/building-effective-agents", "summary": "The canonical explainer. Distinguishes workflows (deterministic pipelines) from agents (model drives the loop). Required reading."},
-        {"title": "What are AI agents really?", "author": "Simon Willison", "duration": "10 min read", "url": "https://simonwillison.net/2025/May/22/tools-in-a-loop/", "summary": "Cuts through the marketing. 'Tools in a loop' — that's the whole thing."},
-        {"title": "LLM Powered Autonomous Agents", "author": "Lilian Weng", "duration": "40 min read", "url": "https://lilianweng.github.io/posts/2023-06-23-agent/", "summary": "Deeper, more technical. Skip on first pass, return when you want the architecture taxonomy."}
+        {"title": "Messages API parameters", "author": "Anthropic", "duration": "10 min read", "url": "https://docs.claude.com/en/api/messages", "summary": "Where temperature, top_p, and stop sequences actually live in the API."},
+        {"title": "Temperature in LLMs", "author": "Simon Willison", "duration": "10 min read", "url": "https://simonwillison.net/tags/temperature/", "summary": "Practical notes on when to tweak it and when not to bother."}
       ]
     },
-    {
-      "id": "m4",
-      "title": "4 · Spec-driven development",
-      "why": "The hottest paradigm of 2025. Instead of prompting your way to code, you write a precise spec; the agent implements it, writes tests, and iterates. Closer to how you already work as an architect — design doc first, code after.",
-      "sf_bridge": "You already do spec-driven dev — it's called the solution design document before a build. The new part: the agent reads the spec and produces the org metadata + Apex. Your design discipline transfers directly; in fact it's your biggest advantage over devs who prompt ad-hoc.",
+    { "id": "m05", "track": "foundations", "tag": "Practice", "time": "≈45 min",
+      "title": "5 · Prompt engineering fundamentals",
+      "why": "Prompts are now part of your codebase. Treat them like Apex — versioned, reviewed, tested. Sloppy prompts are the new sloppy SOQL.",
+      "sf_bridge": "Prompts ≈ stored procedures or formula fields. They look like text but they're code. Lint them, version them, regress-test them.",
       "resources": [
-        {"title": "Spec-driven development with AI", "author": "GitHub", "duration": "20 min read", "url": "https://github.blog/ai-and-ml/generative-ai/spec-driven-development-with-ai-get-started-with-a-new-open-source-toolkit/", "summary": "Introduces GitHub's open-source Spec Kit. The clearest practical walkthrough of the workflow."},
-        {"title": "Spec Kit (GitHub repo)", "author": "GitHub", "duration": "browse", "url": "https://github.com/github/spec-kit", "summary": "The toolkit itself. Read the README, clone it, run through the example."},
+        {"title": "Prompt engineering overview", "author": "Anthropic", "duration": "30 min read", "url": "https://docs.claude.com/en/docs/build-with-claude/prompt-engineering/overview", "summary": "The clearest short reference. Read it twice."},
+        {"title": "Prompt engineering guide", "author": "OpenAI", "duration": "30 min read", "url": "https://platform.openai.com/docs/guides/prompt-engineering", "summary": "The same ideas, OpenAI's framing. Useful for cross-vendor work."},
+        {"title": "Prompt engineering", "author": "Lilian Weng", "duration": "40 min read", "url": "https://lilianweng.github.io/posts/2023-03-15-prompt-engineering/", "summary": "Deeper, technique-by-technique reference."}
+      ]
+    },
+    { "id": "m06", "track": "foundations", "tag": "Core", "time": "≈40 min",
+      "title": "6 · Chain-of-thought & reasoning models",
+      "why": "Reasoning models (o3, DeepSeek-R1, Claude with extended thinking, Gemini 3 Deep Think) think before answering. Different cost, latency, and capability profile.",
+      "sf_bridge": "Reasoning ≈ a Flow with a hidden 'thinking' subflow before the visible answer. You pay for both, but quality jumps on hard problems.",
+      "resources": [
+        {"title": "Learning to reason with LLMs", "author": "OpenAI", "duration": "15 min read", "url": "https://openai.com/index/learning-to-reason-with-llms/", "summary": "The o1 announcement. Sets the conceptual frame."},
+        {"title": "Extended thinking", "author": "Anthropic", "duration": "20 min read", "url": "https://docs.claude.com/en/docs/build-with-claude/extended-thinking", "summary": "How Claude exposes reasoning tokens. Practical."},
+        {"title": "Understanding reasoning LLMs", "author": "Sebastian Raschka", "duration": "30 min read", "url": "https://magazine.sebastianraschka.com/p/understanding-reasoning-llms", "summary": "The technical taxonomy — RL, distillation, scaling test-time compute."}
+      ]
+    },
+    { "id": "m07", "track": "foundations", "tag": "Practice", "time": "≈25 min",
+      "title": "7 · Hallucinations & how to mitigate them",
+      "why": "Confident-sounding wrong answers are the #1 production risk. Three antidotes: retrieval, tools, evals.",
+      "sf_bridge": "Hallucination ≈ a Flow path that runs silently with the wrong filter — looks fine, gives the wrong answer. You catch it the same way: tests and observability.",
+      "resources": [
+        {"title": "Reducing hallucinations", "author": "Anthropic", "duration": "15 min read", "url": "https://docs.claude.com/en/docs/test-and-evaluate/strengthen-guardrails/reduce-hallucinations", "summary": "Concrete prompting techniques + when to add retrieval."},
+        {"title": "Guide to hallucinations", "author": "Lakera", "duration": "15 min read", "url": "https://www.lakera.ai/blog/guide-to-hallucinations-in-large-language-models", "summary": "Vendor blog, but the taxonomy is well-organized."}
+      ]
+    },
+    { "id": "m08", "track": "foundations", "tag": "Production", "time": "≈25 min",
+      "title": "8 · Cost & latency economics",
+      "why": "Every prompt is a billed transaction. Knowing what's expensive (long context, reasoning, image input, web search) is operational hygiene.",
+      "sf_bridge": "Same instinct as governor limits and DML row counts — design for the budget envelope, monitor the bill, fail fast when you exceed.",
+      "resources": [
+        {"title": "Anthropic pricing", "author": "Anthropic", "duration": "5 min read", "url": "https://www.anthropic.com/pricing", "summary": "The current price card. Bookmark it."},
+        {"title": "OpenAI pricing", "author": "OpenAI", "duration": "5 min read", "url": "https://openai.com/api/pricing/", "summary": "Same, OpenAI side. Note: reasoning models bill output for 'thinking' tokens you don't see."},
+        {"title": "LLM pricing in 2024", "author": "Simon Willison", "duration": "10 min read", "url": "https://simonwillison.net/2024/Dec/31/llms-in-2024/#prices-crashed-massively", "summary": "How prices crashed. The trend matters more than the snapshot."}
+      ]
+    },
+
+    { "id": "m09", "track": "models", "tag": "Frontier", "time": "≈25 min",
+      "title": "9 · Frontier closed models — Claude, GPT, Gemini",
+      "why": "The closed frontier sets the ceiling. As of 2026: Claude Sonnet 4.7, GPT-5 / GPT-5-Codex, Gemini 3 Pro are the workhorses for serious coding.",
+      "sf_bridge": "Like Salesforce vs Microsoft Dynamics vs Oracle — three first-tier vendors, each with strengths. Pick by workload and ecosystem fit, not loyalty.",
+      "resources": [
+        {"title": "Claude models overview", "author": "Anthropic", "duration": "10 min read", "url": "https://docs.claude.com/en/docs/about-claude/models", "summary": "Which Claude is which. Sonnet 4.7 is the default for coding."},
+        {"title": "OpenAI models", "author": "OpenAI", "duration": "10 min read", "url": "https://platform.openai.com/docs/models", "summary": "GPT-5 family + reasoning o-series mapped out."},
+        {"title": "Gemini models", "author": "Google", "duration": "10 min read", "url": "https://ai.google.dev/gemini-api/docs/models", "summary": "Gemini 3 Pro + Flash + Nano. Strongest on long context."}
+      ]
+    },
+    { "id": "m10", "track": "models", "tag": "Open weights", "time": "≈30 min",
+      "title": "10 · The open-weights revolution",
+      "why": "Llama 4, DeepSeek V3, Qwen 3, Mistral Large 3 closed most of the gap with the closed frontier in 2025. You can now run a serious model on your own hardware or a rented GPU.",
+      "sf_bridge": "Like the day OSS Postgres + a VPS started competing with managed clouds — vendor leverage shifts. The architect's job becomes 'build vs buy', and 'build' is finally viable for AI.",
+      "resources": [
+        {"title": "Open LLM Leaderboard", "author": "Hugging Face", "duration": "browse", "url": "https://huggingface.co/spaces/open-llm-leaderboard/open_llm_leaderboard", "summary": "The standard scoreboard. Skim the top 20 every quarter."},
+        {"title": "DeepSeek", "author": "DeepSeek AI", "duration": "browse", "url": "https://www.deepseek.com/", "summary": "The current open-weights price/performance leader."},
+        {"title": "Qwen", "author": "Alibaba", "duration": "browse", "url": "https://qwenlm.github.io/", "summary": "Strong all-round family with excellent code-tuned variants."}
+      ]
+    },
+    { "id": "m11", "track": "models", "tag": "Frontier", "time": "≈35 min",
+      "title": "11 · Reasoning models in depth",
+      "why": "o3, GPT-5-thinking, DeepSeek-R1, Claude with extended thinking — different price/latency profile, much better on hard problems. Know when to reach for one.",
+      "sf_bridge": "Like batch Apex vs synchronous Apex — different runtime, different cost shape, used for different problems. You don't run reasoning models on every request.",
+      "resources": [
+        {"title": "Introducing o3 and o4-mini", "author": "OpenAI", "duration": "10 min read", "url": "https://openai.com/index/o3-o4-mini/", "summary": "The reasoning lineup as of 2025."},
+        {"title": "DeepSeek-R1 paper", "author": "DeepSeek", "duration": "60 min read", "url": "https://arxiv.org/abs/2501.12948", "summary": "How an open model matched o1 with reinforcement learning. Skim section 2."},
+        {"title": "Extended thinking", "author": "Anthropic", "duration": "15 min read", "url": "https://docs.claude.com/en/docs/build-with-claude/extended-thinking", "summary": "Practical use of Claude's reasoning mode in code."}
+      ]
+    },
+    { "id": "m12", "track": "models", "tag": "Open weights", "time": "≈30 min",
+      "title": "12 · DeepSeek — the open-source benchmark",
+      "why": "DeepSeek V3 and R1 redefined what open weights can do. Required reading to understand the open frontier and why prices crashed.",
+      "sf_bridge": "Like an unmanaged package that out-performs the AppExchange paid alternative — and is free. Eats vendor margin everywhere.",
+      "resources": [
+        {"title": "DeepSeek-V3 technical report", "author": "DeepSeek", "duration": "60 min read", "url": "https://arxiv.org/abs/2412.19437", "summary": "How they trained a frontier model on a fraction of the budget. Section 1 + 4."},
+        {"title": "DeepSeek-R1 paper", "author": "DeepSeek", "duration": "60 min read", "url": "https://arxiv.org/abs/2501.12948", "summary": "The reasoning model. RL recipe + distillation."},
+        {"title": "DeepSeek on HuggingFace", "author": "DeepSeek", "duration": "browse", "url": "https://huggingface.co/deepseek-ai", "summary": "All weights, configs, and quantizations. Pull and run."}
+      ]
+    },
+    { "id": "m13", "track": "models", "tag": "Open weights", "time": "≈25 min",
+      "title": "13 · Qwen, Llama, Mistral, Kimi — picking an open model",
+      "why": "Beyond DeepSeek, several open families compete: Llama 4 (Meta), Qwen 3 (Alibaba), Mistral Large 3, Kimi K2 (Moonshot). Pick by use case — coding, long-context, small/efficient, reasoning.",
+      "sf_bridge": "AppExchange shopping — you don't install all of them. Pick the one that fits your job-to-be-done.",
+      "resources": [
+        {"title": "Qwen 3 release", "author": "Alibaba", "duration": "15 min read", "url": "https://qwenlm.github.io/blog/qwen3/", "summary": "Best open generalist with open coding variants."},
+        {"title": "Llama models", "author": "Meta", "duration": "browse", "url": "https://ai.meta.com/llama/", "summary": "Llama 4 family. Strong fine-tune ecosystem."},
+        {"title": "Mistral models", "author": "Mistral AI", "duration": "browse", "url": "https://mistral.ai/technology/", "summary": "Mistral Large 3 + Codestral. European, friendlier licensing."}
+      ]
+    },
+    { "id": "m14", "track": "models", "tag": "Core", "time": "≈25 min",
+      "title": "14 · Multimodal models",
+      "why": "Vision, audio, video are first-class. Coding agents read screenshots; design tools generate from sketches; transcripts feed straight into specs.",
+      "sf_bridge": "Like adding rich-content fields to your data model — same pipeline, more surface area. The modal becomes part of the schema.",
+      "resources": [
+        {"title": "Vision (Claude)", "author": "Anthropic", "duration": "15 min read", "url": "https://docs.claude.com/en/docs/build-with-claude/vision", "summary": "How to send images and what the model sees."},
+        {"title": "Vision (OpenAI)", "author": "OpenAI", "duration": "15 min read", "url": "https://platform.openai.com/docs/guides/vision", "summary": "Same idea, OpenAI side. Worth comparing limits."},
+        {"title": "Gemini multimodal", "author": "Google", "duration": "15 min read", "url": "https://ai.google.dev/gemini-api/docs/vision", "summary": "Gemini handles audio and video natively — useful for meeting → spec workflows."}
+      ]
+    },
+    { "id": "m15", "track": "models", "tag": "Open weights", "time": "≈25 min",
+      "title": "15 · Small language models & on-device",
+      "why": "Phi-4, Gemma 3, Llama 3.2 1-3B, Apple Intelligence Foundation models run on a laptop or phone. For privacy-sensitive code, they're the only option.",
+      "sf_bridge": "Like running Apex in a private sandbox vs sending it through a managed package — control vs capability trade-off. Smaller models, but yours.",
+      "resources": [
+        {"title": "Phi-4", "author": "Microsoft", "duration": "10 min read", "url": "https://azure.microsoft.com/en-us/blog/introducing-phi-4", "summary": "14B model that punches above its weight. Best small reasoning."},
+        {"title": "Gemma 3", "author": "Google", "duration": "10 min read", "url": "https://ai.google.dev/gemma", "summary": "Google's small-model family. 1B-27B sizes."},
+        {"title": "Apple Foundation Models", "author": "Apple", "duration": "15 min read", "url": "https://machinelearning.apple.com/research/introducing-apple-foundation-models", "summary": "On-device models designed for personal context. Good architectural read."}
+      ]
+    },
+    { "id": "m16", "track": "models", "tag": "Tools", "time": "≈20 min",
+      "title": "16 · Coding-specialized models",
+      "why": "Beyond general-purpose models, code-tuned variants (Qwen 2.5 Coder, DeepSeek-Coder V2, Codestral, GPT-5-Codex) are cheaper and often better at completion specifically.",
+      "sf_bridge": "Like vertical clouds (Health Cloud, Financial Services Cloud) — same engine, tuned for one job, smaller licensing footprint.",
+      "resources": [
+        {"title": "Qwen 2.5 Coder", "author": "Alibaba", "duration": "15 min read", "url": "https://qwenlm.github.io/blog/qwen2.5-coder/", "summary": "Best open coding model family. 1.5B → 32B sizes."},
+        {"title": "DeepSeek-Coder", "author": "DeepSeek", "duration": "browse", "url": "https://github.com/deepseek-ai/DeepSeek-Coder", "summary": "The code-specialized lineage that started the open-coding wave."},
+        {"title": "Codestral", "author": "Mistral", "duration": "10 min read", "url": "https://mistral.ai/news/codestral/", "summary": "Mistral's coding model. Solid latency for inline completion."}
+      ]
+    },
+
+    { "id": "m17", "track": "agents", "tag": "Core", "time": "≈30 min",
+      "title": "17 · Agents — what the word actually means",
+      "why": "'Agent' is overloaded. In practice it's a loop: model writes output → some output is a tool call → tool runs → result fed back → repeat until done. Everything else is UX.",
+      "sf_bridge": "An agent ≈ a Flow that loops, calls Apex actions (tools), and decides its own next step. The 'model' replaces the decision nodes you'd build declaratively.",
+      "resources": [
+        {"title": "Building effective agents", "author": "Anthropic", "duration": "25 min read", "url": "https://www.anthropic.com/engineering/building-effective-agents", "summary": "The canonical explainer. Distinguishes workflows (deterministic) from agents (model drives the loop)."},
+        {"title": "What are AI agents really?", "author": "Simon Willison", "duration": "10 min read", "url": "https://simonwillison.net/2025/May/22/tools-in-a-loop/", "summary": "Cuts through the marketing. 'Tools in a loop' — that's the whole thing."},
+        {"title": "LLM Powered Autonomous Agents", "author": "Lilian Weng", "duration": "40 min read", "url": "https://lilianweng.github.io/posts/2023-06-23-agent/", "summary": "Deeper, more technical. Skip on first pass, return for the architecture taxonomy."}
+      ]
+    },
+    { "id": "m18", "track": "agents", "tag": "Core", "time": "≈30 min",
+      "title": "18 · ReAct & the tool-use loop",
+      "why": "ReAct (Reason → Act → Observe) is the loop pattern under almost every coding agent. Understand it once and Cursor / Claude Code / Codex / Aider all become readable.",
+      "sf_bridge": "ReAct ≈ a Flow with a Decision element followed by an Action element, in a loop, with each action's result fed back to the decision.",
+      "resources": [
+        {"title": "ReAct paper", "author": "Yao et al.", "duration": "30 min read", "url": "https://arxiv.org/abs/2210.03629", "summary": "The original. Read sections 1-3."},
+        {"title": "ReAct pattern in Python", "author": "Simon Willison", "duration": "15 min read", "url": "https://til.simonwillison.net/llms/python-react-pattern", "summary": "A 100-line implementation. The whole loop fits on one screen."},
+        {"title": "Agents (LangChain concepts)", "author": "LangChain", "duration": "15 min read", "url": "https://python.langchain.com/docs/concepts/agents/", "summary": "Standard library framing of the same idea."}
+      ]
+    },
+    { "id": "m19", "track": "agents", "tag": "Practice", "time": "≈25 min",
+      "title": "19 · Planning & decomposition",
+      "why": "For non-trivial work, the agent first writes a plan, then executes it. This single technique pushes success rates from 40% to 80% on multi-step tasks.",
+      "sf_bridge": "Like writing the technical design doc before the build. Architects already do this — agents are catching up.",
+      "resources": [
+        {"title": "Claude Code best practices", "author": "Anthropic", "duration": "20 min read", "url": "https://www.anthropic.com/engineering/claude-code-best-practices", "summary": "How to structure prompts so the agent plans before it touches code."},
+        {"title": "Planning matters", "author": "Sean Goedecke", "duration": "10 min read", "url": "https://www.seangoedecke.com/spec-first-ai-development/", "summary": "Why planning is the lever, not the model."}
+      ]
+    },
+    { "id": "m20", "track": "agents", "tag": "Core", "time": "≈25 min",
+      "title": "20 · Subagents & orchestration",
+      "why": "A parent agent spawns subagents with their own context window for subtasks. This is how long, multi-file refactors stay coherent.",
+      "sf_bridge": "Subagent ≈ Queueable Apex from a parent transaction — fresh limits, fresh context, returns a result to the parent.",
+      "resources": [
+        {"title": "Multi-agent research system", "author": "Anthropic", "duration": "25 min read", "url": "https://www.anthropic.com/engineering/multi-agent-research-system", "summary": "How Anthropic actually builds multi-agent products. Concrete patterns."},
+        {"title": "Subagents in Claude Code", "author": "Anthropic", "duration": "15 min read", "url": "https://docs.claude.com/en/docs/claude-code/sub-agents", "summary": "How they're configured and when they help."}
+      ]
+    },
+    { "id": "m21", "track": "agents", "tag": "Core", "time": "≈25 min",
+      "title": "21 · Memory architectures",
+      "why": "Models are stateless. Memory is built on top: short-term (in-context), long-term (vector DB / files), procedural (skills / system prompts). Each layer has trade-offs.",
+      "sf_bridge": "Memory layers ≈ session vars + Custom Settings + Custom Metadata + indexed Files. Different lifetimes, different costs, picked per use case.",
+      "resources": [
+        {"title": "MemGPT / Letta", "author": "Letta", "duration": "20 min read", "url": "https://research.memgpt.ai/", "summary": "The 'OS for memory' framing. Useful even if you don't use the lib."},
+        {"title": "Agent skills", "author": "Anthropic", "duration": "15 min read", "url": "https://docs.claude.com/en/docs/agents-and-tools/agent-skills/overview", "summary": "How skills + project memory work in Claude's stack."}
+      ]
+    },
+    { "id": "m22", "track": "agents", "tag": "Practice", "time": "≈20 min",
+      "title": "22 · Long-running & background agents",
+      "why": "Agents that run for minutes-to-hours need different infrastructure than chat: resumable, pausable, observable. This is where 'agent' becomes 'service'.",
+      "sf_bridge": "Like batch Apex / Platform Events — same logic, but built for the long haul with checkpoints and visibility.",
+      "resources": [
+        {"title": "Headless Claude Code", "author": "Anthropic", "duration": "15 min read", "url": "https://docs.claude.com/en/docs/claude-code/headless", "summary": "How to run agents in CI / cron / background services."},
+        {"title": "Cognition blog", "author": "Cognition", "duration": "browse", "url": "https://cognition.ai/blog/", "summary": "Devin team's notes on long-running agents in production."}
+      ]
+    },
+    { "id": "m23", "track": "agents", "tag": "Core", "time": "≈25 min",
+      "title": "23 · Multi-agent systems",
+      "why": "Multiple specialized agents collaborating (researcher, coder, reviewer). Better on complex tasks, harder to debug. Frameworks: AutoGen, CrewAI, LangGraph.",
+      "sf_bridge": "Like multiple Permission Sets on the same User — composability with coordination cost. Power per role, friction at the seams.",
+      "resources": [
+        {"title": "AutoGen", "author": "Microsoft", "duration": "20 min read", "url": "https://microsoft.github.io/autogen/", "summary": "The reference multi-agent framework."},
+        {"title": "CrewAI", "author": "CrewAI", "duration": "15 min read", "url": "https://docs.crewai.com/", "summary": "Higher-level, role-based framing."},
+        {"title": "LangGraph", "author": "LangChain", "duration": "20 min read", "url": "https://langchain-ai.github.io/langgraph/", "summary": "Graph-based orchestration. Production-friendly."}
+      ]
+    },
+    { "id": "m24", "track": "agents", "tag": "Production", "time": "≈25 min",
+      "title": "24 · Agent observability & tracing",
+      "why": "When an agent fails after 30 tool calls, you need a trace. LangSmith, Braintrust, Helicone exist for exactly this.",
+      "sf_bridge": "Like Debug Logs + Apex Replay Debugger — but for probabilistic, multi-step decision trees. Same instinct, more dimensions.",
+      "resources": [
+        {"title": "LangSmith", "author": "LangChain", "duration": "20 min read", "url": "https://docs.smith.langchain.com/", "summary": "The most-used trace + eval platform."},
+        {"title": "Braintrust", "author": "Braintrust", "duration": "15 min read", "url": "https://www.braintrust.dev/docs", "summary": "Strong on evals + production tracing combined."},
+        {"title": "GenAI semantic conventions", "author": "OpenTelemetry", "duration": "15 min read", "url": "https://opentelemetry.io/docs/specs/semconv/gen-ai/", "summary": "Vendor-neutral tracing spec. Good to know what fields exist."}
+      ]
+    },
+
+    { "id": "m25", "track": "tools", "tag": "Core", "time": "≈25 min",
+      "title": "25 · Function calling fundamentals",
+      "why": "How models actually invoke external code. Same idea everywhere, slightly different schemas per vendor.",
+      "sf_bridge": "Function call ≈ Invocable Method called from a Flow. Typed inputs, typed outputs, side effects allowed.",
+      "resources": [
+        {"title": "Tool use overview", "author": "Anthropic", "duration": "20 min read", "url": "https://docs.claude.com/en/docs/agents-and-tools/tool-use/overview", "summary": "The clearest explanation of the request/response shape."},
+        {"title": "Function calling", "author": "OpenAI", "duration": "15 min read", "url": "https://platform.openai.com/docs/guides/function-calling", "summary": "Same idea, OpenAI's framing. Useful for cross-vendor work."}
+      ]
+    },
+    { "id": "m26", "track": "tools", "tag": "Core", "time": "≈30 min",
+      "title": "26 · MCP — the protocol",
+      "why": "MCP (Model Context Protocol) is the emerging standard for plugging tools into any agent. Vendor-neutral. Adopted by Claude, OpenAI, Google in 2025.",
+      "sf_bridge": "MCP ≈ Named Credentials + External Services. Register a capability once, callable from any consumer with typed inputs.",
+      "resources": [
+        {"title": "Introducing MCP", "author": "Anthropic", "duration": "10 min read", "url": "https://www.anthropic.com/news/model-context-protocol", "summary": "The announcement. Read first for the 'why'."},
+        {"title": "MCP spec", "author": "MCP", "duration": "30 min browse", "url": "https://modelcontextprotocol.io/", "summary": "The protocol itself. Skim the architecture page; transport details can wait."},
+        {"title": "MCP servers list", "author": "MCP", "duration": "browse", "url": "https://github.com/modelcontextprotocol/servers", "summary": "Reference implementations + community-built servers. Worth a Saturday."}
+      ]
+    },
+    { "id": "m27", "track": "tools", "tag": "Practice", "time": "≈40 min",
+      "title": "27 · Building your own MCP server",
+      "why": "To expose your own systems (Salesforce org, internal API, database) to any agent. The 2025 equivalent of writing an integration.",
+      "sf_bridge": "Like building a Connected App / External Service. Define the schema once, every agent can consume it without per-vendor work.",
+      "resources": [
+        {"title": "MCP Python SDK", "author": "MCP", "duration": "20 min read", "url": "https://github.com/modelcontextprotocol/python-sdk", "summary": "Official Python SDK. Hello-world to working server in 30 minutes."},
+        {"title": "MCP TypeScript SDK", "author": "MCP", "duration": "20 min read", "url": "https://github.com/modelcontextprotocol/typescript-sdk", "summary": "Same, TypeScript. Pick by your stack."},
+        {"title": "Build an MCP server", "author": "Anthropic", "duration": "20 min read", "url": "https://docs.claude.com/en/docs/agents-and-tools/mcp", "summary": "Anthropic's how-to with concrete code."}
+      ]
+    },
+    { "id": "m28", "track": "tools", "tag": "Core", "time": "≈30 min",
+      "title": "28 · RAG (Retrieval-Augmented Generation)",
+      "why": "Fetch relevant docs at query time, include them in the prompt. The pattern behind every 'chat with your data' product.",
+      "sf_bridge": "RAG ≈ SOQL + formula — pull the right records first, then reason over them. Without retrieval, the model is guessing from training data.",
+      "resources": [
+        {"title": "RAG guide", "author": "Pinecone", "duration": "20 min read", "url": "https://www.pinecone.io/learn/retrieval-augmented-generation/", "summary": "Vendor-flavored but the clearest beginner explainer."},
+        {"title": "Contextual retrieval", "author": "Anthropic", "duration": "20 min read", "url": "https://www.anthropic.com/news/contextual-retrieval", "summary": "How to make RAG actually work — embed chunks with surrounding context."},
+        {"title": "RAG is dead, long live RAG", "author": "Hamel Husain", "duration": "15 min read", "url": "https://hamel.dev/blog/posts/rag/", "summary": "Why most RAG implementations fail and how to evaluate yours."}
+      ]
+    },
+    { "id": "m29", "track": "tools", "tag": "Production", "time": "≈25 min",
+      "title": "29 · Advanced retrieval — rerankers, hybrid search",
+      "why": "Naive vector search retrieves irrelevant chunks. Hybrid (keyword + vector) and rerankers (Cohere, Voyage) close the gap.",
+      "sf_bridge": "Like adding SOSL + SOQL with a relevance sort — semantic recall + lexical precision in one pipeline.",
+      "resources": [
+        {"title": "Cohere Rerank", "author": "Cohere", "duration": "15 min read", "url": "https://docs.cohere.com/docs/rerank-overview", "summary": "Best-in-class reranker. Drop it in front of any retrieval system."},
+        {"title": "Voyage AI", "author": "Voyage", "duration": "15 min read", "url": "https://docs.voyageai.com/", "summary": "Voyage's embeddings + rerank. Often best-of-class on coding queries."},
+        {"title": "Context engineering", "author": "Lance Martin", "duration": "20 min read", "url": "https://rlancemartin.github.io/2025/06/23/context_engineering/", "summary": "The retrieval-stack architecture, end-to-end."}
+      ]
+    },
+    { "id": "m30", "track": "tools", "tag": "Practice", "time": "≈25 min",
+      "title": "30 · Code interpreters & sandboxes",
+      "why": "Letting an agent execute code is the most useful single tool. Sandboxing it safely is non-trivial.",
+      "sf_bridge": "Like running anonymous Apex in a sandbox — powerful, requires guardrails. Prod-grade agents need a containerized blast-radius.",
+      "resources": [
+        {"title": "E2B sandboxes", "author": "E2B", "duration": "15 min read", "url": "https://e2b.dev/docs", "summary": "The standard agent sandbox. Open source, drop-in."},
+        {"title": "Code execution tool", "author": "Anthropic", "duration": "15 min read", "url": "https://docs.claude.com/en/docs/agents-and-tools/tool-use/code-execution-tool", "summary": "Anthropic's hosted sandbox tool. Zero-config option."},
+        {"title": "Code Interpreter", "author": "OpenAI", "duration": "15 min read", "url": "https://platform.openai.com/docs/assistants/tools/code-interpreter", "summary": "OpenAI's hosted equivalent. Worth knowing the differences."}
+      ]
+    },
+
+    { "id": "m31", "track": "spec", "tag": "Core", "time": "≈25 min",
+      "title": "31 · Spec-driven development",
+      "why": "The hottest paradigm of 2025. Instead of prompting your way to code, you write a precise spec; the agent implements + tests + iterates.",
+      "sf_bridge": "You already do spec-driven dev — it's called the solution design document before a build. The new part: the agent reads the spec and produces metadata + Apex.",
+      "resources": [
+        {"title": "Spec-driven development with AI", "author": "GitHub", "duration": "20 min read", "url": "https://github.blog/ai-and-ml/generative-ai/spec-driven-development-with-ai-get-started-with-a-new-open-source-toolkit/", "summary": "Introduces GitHub's open-source Spec Kit. Clearest practical walkthrough."},
+        {"title": "Spec Kit", "author": "GitHub", "duration": "browse", "url": "https://github.com/github/spec-kit", "summary": "The toolkit itself. Read the README, clone it, run the example."},
         {"title": "Specifications: the missing link", "author": "Sean Goedecke", "duration": "15 min read", "url": "https://www.seangoedecke.com/spec-first-ai-development/", "summary": "Why specs beat prompts for non-trivial work. Short, opinionated, right."}
       ]
     },
-    {
-      "id": "m5",
-      "title": "5 · Tools & MCP — how agents touch the real world",
-      "why": "An LLM alone can only produce text. Tools turn it into something that reads files, queries databases, calls APIs. MCP (Model Context Protocol) is the emerging standard for plugging tools in — think of it as the REST/SOAP layer of the agent era.",
-      "sf_bridge": "MCP ≈ Named Credentials + External Services in Salesforce. You register a capability once, then any agent (like any Flow) can call it with typed inputs. The interesting part: you can expose your own org via MCP and let agents read/write metadata.",
+    { "id": "m32", "track": "spec", "tag": "Practice", "time": "≈30 min",
+      "title": "32 · Writing specs that work",
+      "why": "Bad specs produce bad code, regardless of model. Examples, contracts, constraints, and counter-examples are the levers.",
+      "sf_bridge": "Same discipline as a well-written user story with acceptance criteria. The story you'd hand a senior dev now goes to an agent — same quality bar.",
       "resources": [
-        {"title": "Introducing the Model Context Protocol", "author": "Anthropic", "duration": "10 min read", "url": "https://www.anthropic.com/news/model-context-protocol", "summary": "The announcement. Short — read it first for the 'why'."},
-        {"title": "MCP spec & SDK docs", "author": "Anthropic", "duration": "30 min browse", "url": "https://modelcontextprotocol.io/", "summary": "The protocol itself. Skim the architecture page; the transport details can wait."},
-        {"title": "Tool use in practice", "author": "Anthropic", "duration": "20 min read", "url": "https://docs.claude.com/en/docs/agents-and-tools/tool-use/overview", "summary": "How to actually wire up tools in code. Concrete examples."}
+        {"title": "Long-context tips", "author": "Anthropic", "duration": "15 min read", "url": "https://docs.claude.com/en/docs/build-with-claude/prompt-engineering/long-context-tips", "summary": "How to structure 50-page specs so the model doesn't lose the plot."},
+        {"title": "Every — Chain of Thought", "author": "Various", "duration": "browse", "url": "https://every.to/chain-of-thought", "summary": "Best ongoing newsletter on writing specs and managing AI workflows."}
       ]
     },
-    {
-      "id": "m6",
-      "title": "6 · The coding-agent tooling landscape",
-      "why": "The market moves monthly. This is less 'read once' and more 'know what exists so you can pick'. Don't try all of them — pick one terminal-native and one IDE-native, use them for 2 weeks each.",
-      "sf_bridge": "This is the 'which IDE + which deployment tool' question of the AI era. Similar fatigue, similar vendor lock-in concerns. Pick the one that matches your workflow, not the loudest on Twitter.",
+    { "id": "m33", "track": "spec", "tag": "Practice", "time": "≈25 min",
+      "title": "33 · Test generation from specs",
+      "why": "Best practice: agent writes the test first from the spec, then the implementation. TDD with infinite patience.",
+      "sf_bridge": "Like Apex test classes generated from acceptance criteria — but the agent writes both, then runs them, then iterates until they pass.",
       "resources": [
-        {"title": "Claude Code overview", "author": "Anthropic", "duration": "15 min read", "url": "https://docs.claude.com/en/docs/claude-code/overview", "summary": "Terminal-native agent. The one you're using right now. Strong for spec-driven work."},
-        {"title": "Cursor docs", "author": "Cursor", "duration": "15 min browse", "url": "https://docs.cursor.com/", "summary": "IDE-native. VS Code fork with agents built in. Good for incremental edits."},
-        {"title": "Aider (open source CLI agent)", "author": "Aider", "duration": "10 min read", "url": "https://aider.chat/", "summary": "Worth knowing for comparison — open source, git-integrated, works with any model."},
-        {"title": "State of AI coding tools 2025", "author": "Latent Space", "duration": "browse", "url": "https://www.latent.space/", "summary": "Podcast + blog. Subscribe for ongoing updates — the landscape is live."}
+        {"title": "Aider tutorials", "author": "Aider", "duration": "20 min read", "url": "https://aider.chat/docs/usage/tutorials.html", "summary": "Concrete TDD workflows with a coding agent."},
+        {"title": "Claude Code best practices", "author": "Anthropic", "duration": "20 min read", "url": "https://www.anthropic.com/engineering/claude-code-best-practices", "summary": "TDD prompts and test-first patterns from the Claude Code team."}
       ]
     },
-    {
-      "id": "m7",
-      "title": "7 · Evals & production concerns",
-      "why": "Once you build something with an agent, how do you know it works — not just today, but after the model updates next month? This is the part enterprises hit a wall on.",
-      "sf_bridge": "Evals ≈ your Apex test classes + regression suite, but for probabilistic output. You check behavior across a test set, not a single assertion. Without them, you're shipping to prod without sandbox testing.",
+    { "id": "m34", "track": "spec", "tag": "Practice", "time": "≈20 min",
+      "title": "34 · Iterative refinement loops",
+      "why": "Specs are rarely complete first try. The agent runs, fails a test, you adjust the spec, repeat. Treat the spec as the source of truth, not the code.",
+      "sf_bridge": "Like sprint refinement — the doc and the build evolve together. The doc wins ties.",
+      "resources": [
+        {"title": "Simon Willison weblog", "author": "Simon Willison", "duration": "browse", "url": "https://simonwillison.net/", "summary": "The best running journal of how iterative AI coding actually plays out."},
+        {"title": "Spec-first AI development", "author": "Sean Goedecke", "duration": "15 min read", "url": "https://www.seangoedecke.com/spec-first-ai-development/", "summary": "Reread after a few weeks of practice — different parts hit."}
+      ]
+    },
+
+    { "id": "m35", "track": "ide", "tag": "Tools", "time": "≈25 min",
+      "title": "35 · Claude Code",
+      "why": "Anthropic's terminal-native agent. Strong for spec-driven work, deep codebases, headless CI use, MCP integration.",
+      "sf_bridge": "Like SFDX CLI — terminal-first, scriptable, fits an architect's workflow. Composable with everything else in your toolchain.",
+      "resources": [
+        {"title": "Claude Code overview", "author": "Anthropic", "duration": "15 min read", "url": "https://docs.claude.com/en/docs/claude-code/overview", "summary": "Start here. Install + first run."},
+        {"title": "Best practices", "author": "Anthropic", "duration": "20 min read", "url": "https://www.anthropic.com/engineering/claude-code-best-practices", "summary": "How the team that builds it actually uses it."},
+        {"title": "Subagents & MCP", "author": "Anthropic", "duration": "15 min read", "url": "https://docs.claude.com/en/docs/claude-code/sub-agents", "summary": "How to extend Claude Code beyond the basics."}
+      ]
+    },
+    { "id": "m36", "track": "ide", "tag": "Tools", "time": "≈20 min",
+      "title": "36 · Cursor",
+      "why": "VS Code fork with a built-in agent (Composer). Best for incremental edits, inline completion, and IDE-native pairing.",
+      "sf_bridge": "Like VS Code with the Salesforce extensions installed — the editor you live in, just smarter. Lowest cognitive switch cost from existing IDE habits.",
+      "resources": [
+        {"title": "Cursor docs", "author": "Cursor", "duration": "15 min browse", "url": "https://docs.cursor.com/", "summary": "The full feature surface. Read the agent + context sections."},
+        {"title": "Composer Agent", "author": "Cursor", "duration": "15 min read", "url": "https://docs.cursor.com/agent/overview", "summary": "Cursor's multi-file agent mode. The headline feature."}
+      ]
+    },
+    { "id": "m37", "track": "ide", "tag": "Tools", "time": "≈25 min",
+      "title": "37 · OpenAI Codex (CLI + Cloud)",
+      "why": "OpenAI's relaunched coding agent — GPT-5-Codex tuned model, ships as a CLI and a cloud-managed agent. The OpenAI counterpart to Claude Code.",
+      "sf_bridge": "Same loop pattern as Claude Code, different vendor. Pick by which model you want driving the loop and which ecosystem you're in.",
+      "resources": [
+        {"title": "Codex (OpenAI)", "author": "OpenAI", "duration": "10 min read", "url": "https://openai.com/codex/", "summary": "The product page. Read first for positioning."},
+        {"title": "Codex CLI on GitHub", "author": "OpenAI", "duration": "20 min browse", "url": "https://github.com/openai/codex", "summary": "Open-source CLI client. Install + first run."},
+        {"title": "Codex docs", "author": "OpenAI", "duration": "15 min read", "url": "https://platform.openai.com/docs/codex", "summary": "API + advanced usage. Headless / programmatic."}
+      ]
+    },
+    { "id": "m38", "track": "ide", "tag": "Open", "time": "≈15 min",
+      "title": "38 · Aider",
+      "why": "Open-source CLI agent that works with any model. Git-integrated, scriptable, model-agnostic. Worth knowing as your fallback when commercial tools are blocked.",
+      "sf_bridge": "Like an open-source SFDX plugin — community-driven, swap the engine, your data stays yours.",
+      "resources": [
+        {"title": "Aider site", "author": "Aider", "duration": "10 min read", "url": "https://aider.chat/", "summary": "Install + features. Strong README."},
+        {"title": "Aider on GitHub", "author": "Aider", "duration": "browse", "url": "https://github.com/Aider-AI/aider", "summary": "Source. Worth reading the architecture if you want to understand a coding agent end-to-end."}
+      ]
+    },
+    { "id": "m39", "track": "ide", "tag": "Tools", "time": "≈20 min",
+      "title": "39 · WebStorm + JetBrains Junie",
+      "why": "JetBrains' agent (Junie) embedded in WebStorm / IntelliJ / PyCharm. For teams already in the JetBrains family, the lowest-friction agent rollout.",
+      "sf_bridge": "Like switching IDE plugins — your shortcuts and refactors stay; the AI is layered on top, not replacing the editor you trust.",
+      "resources": [
+        {"title": "Junie", "author": "JetBrains", "duration": "10 min read", "url": "https://www.jetbrains.com/junie/", "summary": "JetBrains' agent. Autonomous mode + IDE-native."},
+        {"title": "JetBrains AI Assistant", "author": "JetBrains", "duration": "10 min read", "url": "https://www.jetbrains.com/ai/", "summary": "The broader AI suite — completion, chat, refactor."},
+        {"title": "WebStorm AI features", "author": "JetBrains", "duration": "10 min read", "url": "https://www.jetbrains.com/webstorm/features/ai-coding-assistance.html", "summary": "WebStorm-specific feature page. Concrete examples."}
+      ]
+    },
+    { "id": "m40", "track": "ide", "tag": "New", "time": "≈25 min",
+      "title": "40 · Google Antigravity",
+      "why": "Google's agent-first IDE (launched Nov 2025). Agents run in browser, terminal, and editor concurrently. Free preview, supports Gemini 3 + Claude + GPT models.",
+      "sf_bridge": "Like a brand-new IDE built around agents from day one — not retrofitted. The first serious 'agent-native' editor from a frontier lab.",
+      "resources": [
+        {"title": "Antigravity", "author": "Google", "duration": "10 min read", "url": "https://antigravity.google/", "summary": "Product site. Download + first impressions."},
+        {"title": "Antigravity docs", "author": "Google", "duration": "20 min read", "url": "https://docs.antigravity.google/", "summary": "Walkthrough of agent-first workflows."},
+        {"title": "Google blog announcement", "author": "Google", "duration": "10 min read", "url": "https://blog.google/technology/google-deepmind/google-antigravity/", "summary": "The launch context. Why Google built a new IDE."}
+      ]
+    },
+    { "id": "m41", "track": "ide", "tag": "Tools", "time": "≈15 min",
+      "title": "41 · Windsurf (Codeium)",
+      "why": "Codeium's agentic IDE. Strong for 'Cascade' multi-file edits. Acquired by Cognition in 2025 — now part of the Devin family.",
+      "sf_bridge": "Like another VS Code fork — pick by which agent loop fits your brain. Cascade has a distinctive multi-file flow worth trying.",
+      "resources": [
+        {"title": "Windsurf", "author": "Codeium / Cognition", "duration": "10 min read", "url": "https://windsurf.com/", "summary": "Product site. Free tier exists."},
+        {"title": "Cascade docs", "author": "Windsurf", "duration": "15 min read", "url": "https://docs.windsurf.com/windsurf/cascade", "summary": "The multi-file agent flow that's the headline feature."}
+      ]
+    },
+    { "id": "m42", "track": "ide", "tag": "New", "time": "≈25 min",
+      "title": "42 · Devin & autonomous agents",
+      "why": "Cognition's Devin is the headline 'fully autonomous' coding agent. Useful to understand the ceiling of current autonomy and where the costs and failures show up.",
+      "sf_bridge": "Like an outsourced contractor — you describe the ticket, they ship a PR. Good for well-scoped work, oversight still required, billing per task.",
+      "resources": [
+        {"title": "Devin", "author": "Cognition", "duration": "10 min read", "url": "https://devin.ai/", "summary": "Product. Pricing + when it's worth using."},
+        {"title": "Cognition blog", "author": "Cognition", "duration": "browse", "url": "https://cognition.ai/blog/", "summary": "Engineering posts on building long-running agents."}
+      ]
+    },
+
+    { "id": "m43", "track": "prod", "tag": "Production", "time": "≈25 min",
+      "title": "43 · Evals — eval-driven development",
+      "why": "Once you build something with an agent, how do you know it works — not just today, but after the model updates next month? This is where enterprises hit a wall.",
+      "sf_bridge": "Evals ≈ Apex test classes + regression suite, but for probabilistic output. You check behavior across a test set, not a single assertion.",
       "resources": [
         {"title": "Your AI product needs evals", "author": "Hamel Husain", "duration": "25 min read", "url": "https://hamel.dev/blog/posts/evals/", "summary": "The definitive post on eval-driven development. Practical, not academic."},
-        {"title": "A field guide to rapidly improving AI products", "author": "Hamel Husain & Shreya Shankar", "duration": "30 min read", "url": "https://hamel.dev/blog/posts/field-guide/", "summary": "How to move from prototype to production. What to measure, what to ignore."}
+        {"title": "Field guide", "author": "Hamel Husain & Shreya Shankar", "duration": "30 min read", "url": "https://hamel.dev/blog/posts/field-guide/", "summary": "How to move from prototype to production. What to measure, what to ignore."}
+      ]
+    },
+    { "id": "m44", "track": "prod", "tag": "Production", "time": "≈20 min",
+      "title": "44 · Building eval datasets",
+      "why": "Real evals come from real production traces, labeled by humans. Synthetic-only datasets miss what real users break.",
+      "sf_bridge": "Like building a sandbox dataset from production for UAT — same instinct, more iteration. The dataset is the asset, not the model.",
+      "resources": [
+        {"title": "Evals FAQ", "author": "Hamel Husain", "duration": "20 min read", "url": "https://hamel.dev/blog/posts/evals-faq/", "summary": "Practical Q&A. What to do when you have no data yet."},
+        {"title": "Develop test cases", "author": "Anthropic", "duration": "15 min read", "url": "https://docs.claude.com/en/docs/test-and-evaluate/develop-tests", "summary": "Anthropic's structured approach to building eval sets."}
+      ]
+    },
+    { "id": "m45", "track": "prod", "tag": "Production", "time": "≈20 min",
+      "title": "45 · LLM-as-judge",
+      "why": "For open-ended outputs (summaries, code), use a model to score outputs against criteria. Cheap, scalable, has known biases — calibrate carefully.",
+      "sf_bridge": "Like a Validation Rule that's itself a formula calling a service — flexible but watch the second-order failure modes.",
+      "resources": [
+        {"title": "Eval tool (Claude)", "author": "Anthropic", "duration": "15 min read", "url": "https://docs.claude.com/en/docs/test-and-evaluate/eval-tool", "summary": "Claude's first-party eval workflow. Includes judge templates."},
+        {"title": "LLM evaluators", "author": "LangSmith", "duration": "20 min read", "url": "https://docs.smith.langchain.com/evaluation", "summary": "Concrete patterns for grading model output with a model."}
+      ]
+    },
+    { "id": "m46", "track": "prod", "tag": "Production", "time": "≈25 min",
+      "title": "46 · Observability & tracing in production",
+      "why": "Logs aren't enough. You need step-level traces with token counts, costs, tool calls, and decisions — across thousands of agent runs.",
+      "sf_bridge": "Like Setup → Debug Logs but per decision step, with cost columns and a search index. Not optional once you're in prod.",
+      "resources": [
+        {"title": "LangSmith", "author": "LangChain", "duration": "20 min read", "url": "https://docs.smith.langchain.com/", "summary": "The most-used trace + eval platform."},
+        {"title": "Langfuse", "author": "Langfuse", "duration": "15 min read", "url": "https://langfuse.com/docs", "summary": "Open-source alternative. Self-host friendly."},
+        {"title": "Helicone", "author": "Helicone", "duration": "15 min read", "url": "https://docs.helicone.ai/", "summary": "Proxy-based observability. Drop-in for OpenAI-compatible APIs."}
+      ]
+    },
+    { "id": "m47", "track": "prod", "tag": "Security", "time": "≈25 min",
+      "title": "47 · Security — prompt injection",
+      "why": "Prompt injection is the #1 systemic risk. Untrusted text reaching the model can override its instructions. There is no full fix yet.",
+      "sf_bridge": "Like SQL injection in 2005 — the new attack class everyone underestimates. Same lesson: never trust string concatenation across trust boundaries.",
+      "resources": [
+        {"title": "Prompt injection", "author": "Simon Willison", "duration": "30 min browse", "url": "https://simonwillison.net/tags/promptinjection/", "summary": "The running archive. Start with the most recent posts."},
+        {"title": "OWASP LLM Top 10", "author": "OWASP", "duration": "20 min read", "url": "https://owasp.org/www-project-top-10-for-large-language-model-applications/", "summary": "The standard threat list. Map it to your system."},
+        {"title": "Mitigate jailbreaks", "author": "Anthropic", "duration": "15 min read", "url": "https://docs.claude.com/en/docs/test-and-evaluate/strengthen-guardrails/mitigate-jailbreaks", "summary": "Concrete defensive techniques. None are silver bullets."}
+      ]
+    },
+    { "id": "m48", "track": "prod", "tag": "Security", "time": "≈25 min",
+      "title": "48 · Security — secrets, sandboxing & supply chain",
+      "why": "An agent with shell access can leak credentials, run arbitrary npm installs, exfiltrate code. Constrain the blast radius.",
+      "sf_bridge": "Like setting Apex sharing rules + Permission Sets — least privilege all the way down. The agent gets exactly what it needs, nothing more.",
+      "resources": [
+        {"title": "Claude Code permissions", "author": "Anthropic", "duration": "15 min read", "url": "https://docs.claude.com/en/docs/claude-code/iam", "summary": "How to lock down what Claude Code can read, write, run."},
+        {"title": "The lethal trifecta", "author": "Simon Willison", "duration": "15 min read", "url": "https://simonwillison.net/2025/Jun/16/the-lethal-trifecta/", "summary": "Private data + untrusted content + external comms = exfiltration risk. Keep them separate."}
+      ]
+    },
+    { "id": "m49", "track": "prod", "tag": "Production", "time": "≈20 min",
+      "title": "49 · Cost monitoring at scale",
+      "why": "An agent running unsupervised can burn $1k/day. You want hard caps, not just dashboards.",
+      "sf_bridge": "Like Limits class checks in Apex — fail fast before you hit the wall. Cost is a runtime constraint, not a billing afterthought.",
+      "resources": [
+        {"title": "Helicone", "author": "Helicone", "duration": "15 min read", "url": "https://docs.helicone.ai/", "summary": "Proxy-based cost tracking + rate limits."},
+        {"title": "Langfuse cost tracking", "author": "Langfuse", "duration": "15 min read", "url": "https://langfuse.com/docs/model-usage-and-cost", "summary": "Per-run cost rollups, with model-aware accounting."}
+      ]
+    },
+    { "id": "m50", "track": "prod", "tag": "Production", "time": "≈30 min",
+      "title": "50 · Deploying agents to production",
+      "why": "Pulling it all together — pick model, write spec, build evals, ship behind a feature flag, monitor, iterate. The architect's loop, applied to AI.",
+      "sf_bridge": "Like a release management plan — sandbox, UAT, prod, with rollback. Same gates, different runtime.",
+      "resources": [
+        {"title": "Field guide", "author": "Hamel Husain & Shreya Shankar", "duration": "30 min read", "url": "https://hamel.dev/blog/posts/field-guide/", "summary": "The end-to-end playbook for shipping LLM products."},
+        {"title": "Patterns for building LLM systems", "author": "Eugene Yan", "duration": "30 min read", "url": "https://eugeneyan.com/writing/llm-patterns/", "summary": "Architectural patterns. The 'design book' of the AI stack."}
       ]
     }
+  ],
+
+  "stack": [
+    { "category": "Frontier closed models", "name": "Claude Sonnet 4.7", "vendor": "Anthropic", "tag": "Recommended", "license": "Closed", "oneliner": "Default daily-driver for coding in 2026. Best long-context reasoning at this price tier.", "url": "https://www.anthropic.com/claude/sonnet", "sf": "The 'all-around enterprise developer' model — picks up nuance, holds discipline." },
+    { "category": "Frontier closed models", "name": "Claude Opus 4.7", "vendor": "Anthropic", "tag": "Top tier", "license": "Closed", "oneliner": "Top-tier reasoning. Use for hard architectural questions; expensive per token.", "url": "https://www.anthropic.com/claude/opus", "sf": "The principal architect you call in for the hardest design reviews." },
+    { "category": "Frontier closed models", "name": "GPT-5", "vendor": "OpenAI", "tag": "Frontier", "license": "Closed", "oneliner": "OpenAI's frontier general model. Strong on tool use, code, and structured output.", "url": "https://openai.com/index/introducing-gpt-5/", "sf": "Salesforce-branded all-in-one — strong defaults across the surface." },
+    { "category": "Frontier closed models", "name": "GPT-5-Codex", "vendor": "OpenAI", "tag": "Coding", "license": "Closed", "oneliner": "Code-tuned GPT-5 powering OpenAI Codex CLI/cloud. Best inside the OpenAI agent stack.", "url": "https://platform.openai.com/docs/models", "sf": "The vertical edition tuned for one job — coding." },
+    { "category": "Frontier closed models", "name": "o3 / o4-mini", "vendor": "OpenAI", "tag": "Reasoning", "license": "Closed", "oneliner": "OpenAI's reasoning models. Slow + expensive, but unmatched on multi-step problems.", "url": "https://openai.com/index/o3-o4-mini/", "sf": "Async batch Apex of LLMs — different runtime, harder problems." },
+    { "category": "Frontier closed models", "name": "Gemini 3 Pro", "vendor": "Google", "tag": "Long context", "license": "Closed", "oneliner": "Long-context champion (1M+ tokens). Strong multimodal — feeds whole repos and videos.", "url": "https://deepmind.google/technologies/gemini/", "sf": "When the context window is your bottleneck, this is the escape hatch." },
+    { "category": "Frontier closed models", "name": "Gemini 3 Flash", "vendor": "Google", "tag": "Cheap & fast", "license": "Closed", "oneliner": "The cheap-and-fast workhorse. Great for high-volume agent loops where Sonnet is overkill.", "url": "https://deepmind.google/technologies/gemini/", "sf": "The Lightning Component of LLMs — small, fast, deployed everywhere." },
+
+    { "category": "Open-weights models", "name": "DeepSeek V3.1", "vendor": "DeepSeek", "tag": "Open frontier", "license": "Open weights", "oneliner": "Flagship open-weights generalist. Closes most of the gap with frontier closed models, at a fraction of cost.", "url": "https://www.deepseek.com/", "sf": "The open-source unmanaged package outperforming the paid AppExchange option." },
+    { "category": "Open-weights models", "name": "DeepSeek-R1", "vendor": "DeepSeek", "tag": "Open reasoning", "license": "Open weights", "oneliner": "First open reasoning model to match o1-class performance. Distillations run on consumer GPUs.", "url": "https://github.com/deepseek-ai/DeepSeek-R1", "sf": "The open answer to commercial reasoning models. Self-host friendly." },
+    { "category": "Open-weights models", "name": "Qwen 3", "vendor": "Alibaba", "tag": "Open generalist", "license": "Apache 2.0", "oneliner": "Strong open generalist across sizes (0.6B → 235B). Permissive license, excellent code-tuned variants.", "url": "https://qwenlm.github.io/blog/qwen3/", "sf": "Best 'pick a size' family — small for sandbox, large for prod." },
+    { "category": "Open-weights models", "name": "Qwen 2.5 Coder", "vendor": "Alibaba", "tag": "Open coding", "license": "Apache 2.0", "oneliner": "Best open coding model family. The 32B version rivals frontier closed models on code-specific tasks.", "url": "https://qwenlm.github.io/blog/qwen2.5-coder/", "sf": "Specialized open vertical — coding only, exceptional at it." },
+    { "category": "Open-weights models", "name": "Llama 4", "vendor": "Meta", "tag": "Open frontier", "license": "Llama license", "oneliner": "Meta's frontier open family. Strong fine-tune ecosystem, broad tooling support.", "url": "https://ai.meta.com/llama/", "sf": "The reference open platform — most third-party tooling assumes you're on it." },
+    { "category": "Open-weights models", "name": "Mistral Large 3", "vendor": "Mistral AI", "tag": "Open weights", "license": "Mixed", "oneliner": "European open option with strong coding (via Codestral) and serious enterprise support.", "url": "https://mistral.ai/", "sf": "The European Salesforce — sovereignty-friendly, enterprise-ready." },
+    { "category": "Open-weights models", "name": "Kimi K2", "vendor": "Moonshot AI", "tag": "Long context", "license": "Open weights", "oneliner": "Long-context champion among open models. Useful when you can't (or won't) pay Gemini 3 prices.", "url": "https://kimi.moonshot.cn/", "sf": "Open answer for repo-scale context windows." },
+    { "category": "Open-weights models", "name": "Phi-4", "vendor": "Microsoft", "tag": "Small", "license": "MIT", "oneliner": "14B model that punches above its weight. Best small model for reasoning on a laptop GPU.", "url": "https://azure.microsoft.com/en-us/blog/introducing-phi-4", "sf": "The Lightning Out edition — runs anywhere, surprisingly capable." },
+    { "category": "Open-weights models", "name": "Gemma 3", "vendor": "Google", "tag": "Small", "license": "Gemma license", "oneliner": "Google's small-model family (1B, 4B, 12B, 27B). Strong inference performance, mobile-friendly.", "url": "https://ai.google.dev/gemma", "sf": "Google's on-device option. Pairs naturally with Antigravity / Gemini stack." },
+
+    { "category": "Coding agent CLIs", "name": "Claude Code", "vendor": "Anthropic", "tag": "Recommended", "license": "Commercial", "oneliner": "Terminal-native coding agent. Strong for spec-driven work, deep codebases, headless CI runs.", "url": "https://docs.claude.com/en/docs/claude-code/overview", "sf": "SFDX CLI of agents — terminal-first, scriptable, composable." },
+    { "category": "Coding agent CLIs", "name": "OpenAI Codex CLI", "vendor": "OpenAI", "tag": "Recommended", "license": "Open source CLI", "oneliner": "OpenAI's relaunched coding agent. CLI client is open source; backed by GPT-5-Codex.", "url": "https://github.com/openai/codex", "sf": "OpenAI counterpart to Claude Code. Pick by which model drives the loop." },
+    { "category": "Coding agent CLIs", "name": "Aider", "vendor": "Open source", "tag": "Open", "license": "Apache 2.0", "oneliner": "Model-agnostic open-source CLI agent. Git-integrated, scriptable, your fallback when commercial tools are blocked.", "url": "https://aider.chat/", "sf": "Open-source SFDX plugin — community-driven, swap engines freely." },
+    { "category": "Coding agent CLIs", "name": "Continue", "vendor": "Open source", "tag": "Open", "license": "Apache 2.0", "oneliner": "Open-source autopilot for IDEs (VS Code, JetBrains). Bring your own model.", "url": "https://www.continue.dev/", "sf": "The open IDE plugin layer — works across editors." },
+    { "category": "Coding agent CLIs", "name": "Cline", "vendor": "Open source", "tag": "Open", "license": "Apache 2.0", "oneliner": "VS Code agent with strong tool-use. Acts on your filesystem with explicit approval per step.", "url": "https://cline.bot/", "sf": "Like inline-approval workflows — every action is gated until you sign off." },
+
+    { "category": "Agentic IDEs", "name": "Cursor", "vendor": "Anysphere", "tag": "Popular", "license": "Commercial", "oneliner": "VS Code fork with a built-in agent (Composer). The most-used agentic IDE in 2026.", "url": "https://cursor.com/", "sf": "VS Code with the AI extensions, but tighter integration. Lowest switching cost from existing IDE habits." },
+    { "category": "Agentic IDEs", "name": "Google Antigravity", "vendor": "Google", "tag": "New", "license": "Free preview", "oneliner": "Agent-first IDE launched Nov 2025. Agents run in browser, terminal, and editor concurrently. Multi-model.", "url": "https://antigravity.google/", "sf": "Brand-new IDE built around agents from day one — not retrofitted onto VS Code." },
+    { "category": "Agentic IDEs", "name": "Windsurf", "vendor": "Cognition", "tag": "Tools", "license": "Commercial", "oneliner": "Codeium's agentic IDE (now Cognition-owned). Cascade flow excels at multi-file edits.", "url": "https://windsurf.com/", "sf": "Another VS Code fork — pick by which agent loop fits your brain." },
+    { "category": "Agentic IDEs", "name": "WebStorm + Junie", "vendor": "JetBrains", "tag": "Tools", "license": "Commercial", "oneliner": "JetBrains' AI agent (Junie) embedded across IntelliJ family. Lowest-friction option for JetBrains shops.", "url": "https://www.jetbrains.com/junie/", "sf": "Your existing IDE, plus an agent — refactors and shortcuts you already know stay intact." },
+    { "category": "Agentic IDEs", "name": "Zed", "vendor": "Zed Industries", "tag": "New", "license": "GPL", "oneliner": "Native, fast editor with first-class AI features. Built in Rust; pairs natively with multiple models.", "url": "https://zed.dev/", "sf": "The 'high-performance' editor — for when VS Code's latency annoys you." },
+    { "category": "Agentic IDEs", "name": "GitHub Copilot Workspace", "vendor": "GitHub", "tag": "Enterprise", "license": "Commercial", "oneliner": "Issue-to-PR workflow built into GitHub. Strong for teams already using GitHub Issues / Projects.", "url": "https://githubnext.com/projects/copilot-workspace/", "sf": "Where work lives in your tracker, not your editor — agent runs there." },
+
+    { "category": "Autonomous & app-builder agents", "name": "Devin", "vendor": "Cognition", "tag": "Autonomous", "license": "Commercial", "oneliner": "The headline autonomous coding agent. Picks up tickets, ships PRs, reports back.", "url": "https://devin.ai/", "sf": "Outsourced contractor model — task in, PR out, billed per task." },
+    { "category": "Autonomous & app-builder agents", "name": "Replit Agent", "vendor": "Replit", "tag": "App builder", "license": "Commercial", "oneliner": "Build full apps from a prompt; runs in Replit's hosted environment.", "url": "https://replit.com/ai", "sf": "Quick-build Lightning App from a description — deployable instantly." },
+    { "category": "Autonomous & app-builder agents", "name": "v0", "vendor": "Vercel", "tag": "UI builder", "license": "Commercial", "oneliner": "UI / app generator from prompts. Strongest for React + shadcn-style frontends.", "url": "https://v0.dev/", "sf": "UI Builder for arbitrary React apps — design-to-code in one step." },
+    { "category": "Autonomous & app-builder agents", "name": "Bolt.new", "vendor": "StackBlitz", "tag": "App builder", "license": "Commercial", "oneliner": "In-browser full-stack app generator with WebContainers. Works without local install.", "url": "https://bolt.new/", "sf": "Sandbox-in-a-browser — provision and ship a full app without an env." },
+    { "category": "Autonomous & app-builder agents", "name": "Lovable", "vendor": "Lovable", "tag": "App builder", "license": "Commercial", "oneliner": "Prompt → production web app. Strong on full-stack scaffolds with auth + DB included.", "url": "https://lovable.dev/", "sf": "Closer to a managed package builder — opinionated stack, fast to value." }
   ],
 
   "glossary": [
@@ -96,7 +554,18 @@
     {"term": "Spec-driven development", "definition": "Write a precise specification first; the agent generates implementation + tests + iterates until the spec is satisfied.", "sf": "Solution design document → build handoff, but the agent is the dev."},
     {"term": "Eval", "definition": "A test suite for probabilistic output. Run the same prompt across many cases and measure a quality metric.", "sf": "Apex test class + regression pack for AI output."},
     {"term": "RAG (Retrieval-Augmented Generation)", "definition": "Fetch relevant documents at query time and include them in the prompt, so the model answers from your data instead of memory.", "sf": "SOQL + formula — pull the right records, then reason over them."},
-    {"term": "Embedding", "definition": "A vector representation of a chunk of text. Used to find semantically similar content (the 'retrieval' in RAG).", "sf": "A hashed/indexed field you use for fuzzy lookup — but the similarity is semantic, not literal."},
-    {"term": "Hallucination", "definition": "When a model produces confident-sounding output that is factually wrong. Reduced (not eliminated) by retrieval, tool use, and evals.", "sf": "A Flow path that runs silently with the wrong filter — looks fine, gives the wrong answer."}
+    {"term": "Embedding", "definition": "A vector representation of a chunk of text. Used to find semantically similar content (the 'retrieval' in RAG).", "sf": "A hashed/indexed field for fuzzy lookup — but the similarity is semantic, not literal."},
+    {"term": "Hallucination", "definition": "When a model produces confident-sounding output that is factually wrong. Reduced (not eliminated) by retrieval, tool use, and evals.", "sf": "A Flow path that runs silently with the wrong filter — looks fine, gives the wrong answer."},
+    {"term": "Reasoning model", "definition": "A model trained to 'think' before answering — emits hidden reasoning tokens, then a final answer. Slower, pricier, much better on hard problems.", "sf": "Async batch Apex of LLMs — different runtime profile, picked for harder problems."},
+    {"term": "Open weights", "definition": "A model whose trained parameters are publicly downloadable. Doesn't always mean open license — read the terms.", "sf": "Like an unmanaged package — source visible, but license rules still apply."},
+    {"term": "ReAct", "definition": "Reason → Act → Observe loop. The agent decides, runs a tool, observes the result, decides again. The pattern under most coding agents.", "sf": "Decision element → Action element → loop, with each result feeding back into the next decision."},
+    {"term": "LLM-as-judge", "definition": "Using a model to score outputs against criteria. Cheap eval automation, with calibration and bias caveats.", "sf": "A Validation Rule that's itself a service call — flexible but watch the second-order failure modes."},
+    {"term": "Prompt injection", "definition": "Untrusted text reaching the model overrides its instructions. The #1 systemic security risk for agent systems.", "sf": "SQL injection, but for prompts. Don't concatenate untrusted strings across trust boundaries."},
+    {"term": "Skill", "definition": "Reusable, packaged instructions + assets that an agent loads on demand. Way to give an agent durable, scoped capabilities.", "sf": "Like an installed package — adds named capabilities the agent can invoke when relevant."},
+    {"term": "Reranker", "definition": "A second-pass model that re-scores retrieved chunks for relevance. Improves RAG quality dramatically with little code.", "sf": "Like adding a relevance ORDER BY after your SOQL — same recall, much better precision."},
+    {"term": "Sandbox (agent)", "definition": "An isolated runtime where an agent can execute code without touching your host. Limits blast radius.", "sf": "Salesforce sandbox, but for arbitrary code execution. Required for prod-grade agents."},
+    {"term": "Headless agent", "definition": "An agent that runs without a UI — invoked from CI, cron, or another service. Same loop, no chat surface.", "sf": "Like Apex run from CI/Bash — no UI, all programmatic, fits into pipelines."},
+    {"term": "Token cost", "definition": "Per-token price for input + output. Reasoning models also bill 'thinking' tokens you don't see.", "sf": "Metered API usage with cost per row — same instinct, different units."},
+    {"term": "System card", "definition": "A vendor-published document on a model's capabilities, limits, and risks. Useful for due diligence and model selection.", "sf": "Like release notes + impact assessment combined — read before adopting."}
   ]
 }
