@@ -48,6 +48,155 @@ const TRACK_LABEL = {
   tools: "Tools",
 };
 
+// ══════════ Playground commands ══════════
+const PLAYGROUND_COMMANDS = [
+  {
+    name: "claude-code --help",
+    desc: "View help for the Claude Code CLI",
+    output: [
+      { type: "cmd", text: "claude-code --help" },
+      { type: "info", text: "Usage: claude-code [options] [command]" },
+      { type: "output", text: "Options:" },
+      { type: "output", text: "  -v, --version    output the version number" },
+      { type: "output", text: "  --model <name>   specify the model to use (default: sonnet-4.7)" },
+      { type: "output", text: "Commands:" },
+      { type: "output", text: "  init             Initialize Claude Code in the current directory" },
+      { type: "output", text: "  login            Login to Anthropic" },
+      { type: "output", text: "  chat             Start an interactive session" }
+    ]
+  },
+  {
+    name: "claude-code init",
+    desc: "Initialize a new project with Claude Code",
+    output: [
+      { type: "cmd", text: "claude-code init" },
+      { type: "info", text: "🔍 Analyzing project structure..." },
+      { type: "output", text: "Detected: JavaScript (Node.js), Vanilla CSS" },
+      { type: "output", text: "Creating .claude directory..." },
+      { type: "output", text: "Generating CLAUDE.md..." },
+      { type: "success", text: "✅ Project initialized. Use 'claude-code chat' to begin." }
+    ]
+  },
+  {
+    name: "mcp list",
+    desc: "List installed Model Context Protocol servers",
+    output: [
+      { type: "cmd", text: "mcp list" },
+      { type: "output", text: "NAME             STATUS    TRANSPORT" },
+      { type: "output", text: "salesforce-org   RUNNING   stdio" },
+      { type: "output", text: "google-search    RUNNING   stdio" },
+      { type: "output", text: "file-system      RUNNING   stdio" },
+      { type: "success", text: "3 servers active." }
+    ]
+  },
+  {
+    name: "aider --model sonnet",
+    desc: "Start Aider with Claude 3.5 Sonnet",
+    output: [
+      { type: "cmd", text: "aider --model sonnet" },
+      { type: "info", text: "Aider v0.72.0" },
+      { type: "output", text: "Model: anthropic/claude-3-5-sonnet-20241022" },
+      { type: "output", text: "Git repo: .git" },
+      { type: "output", text: "Repo-map: using 1024 tokens" },
+      { type: "output", text: "Use /help to see all commands." },
+      { type: "info", text: "How can I help you today?" }
+    ]
+  },
+  {
+    name: "prompt build-app",
+    desc: "Simulate a complex app-building prompt",
+    editor: "Act as an expert web architect. \nBuild a responsive 'Liquid Glass' dashboard using:\n- Vanilla CSS variables\n- Grid and Flexbox\n- Subtle backdrop-filter effects\n- 60fps animations\n\nThe dashboard should include a sidebar, a stats row, and a live activity feed.",
+    output: [
+      { type: "info", text: "System: Processing prompt..." },
+      { type: "output", text: "Thought: Creating layout structure..." },
+      { type: "output", text: "Thought: Implementing design tokens..." },
+      { type: "output", text: "Thought: Generating CSS animations..." },
+      { type: "success", text: "✨ Component generated. Previewing in artifacts..." }
+    ]
+  }
+];
+
+let playgroundInitialized = false;
+
+function initPlayground() {
+  if (playgroundInitialized) return;
+  
+  const list = document.getElementById("command-list");
+  const terminal = document.getElementById("play-terminal");
+  const input = document.getElementById("play-input");
+  const editor = document.getElementById("play-editor");
+  const clearBtn = document.getElementById("play-clear");
+
+  if (!list || !terminal || !input) return;
+
+  // Render sidebar
+  list.innerHTML = PLAYGROUND_COMMANDS.map((cmd, i) => `
+    <div class="command-item" data-index="${i}">
+      <span class="command-name">${escapeHtml(cmd.name)}</span>
+      <span class="command-desc">${escapeHtml(cmd.desc)}</span>
+    </div>
+  `).join("");
+
+  // Handle sidebar clicks
+  list.querySelectorAll(".command-item").forEach(item => {
+    item.addEventListener("click", () => {
+      const cmd = PLAYGROUND_COMMANDS[item.dataset.index];
+      if (cmd.editor) editor.value = cmd.editor;
+      runSimulatedCommand(cmd.output);
+    });
+  });
+
+  // Handle terminal input
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && input.value.trim()) {
+      const val = input.value.trim();
+      input.value = "";
+      
+      // Simple exact match or generic output
+      const matched = PLAYGROUND_COMMANDS.find(c => c.name === val);
+      if (matched) {
+        runSimulatedCommand(matched.output);
+      } else {
+        runSimulatedCommand([
+          { type: "cmd", text: val },
+          { type: "error", text: `sh: command not found: ${val}` }
+        ]);
+      }
+    }
+  });
+
+  clearBtn.addEventListener("click", () => {
+    terminal.innerHTML = '<div class="term-line"><span class="term-prompt">❯</span> Terminal cleared.</div>';
+  });
+
+  playgroundInitialized = true;
+}
+
+function runSimulatedCommand(output) {
+  const terminal = document.getElementById("play-terminal");
+  if (!terminal) return;
+
+  // Add a small delay for "feeling"
+  let delay = 0;
+  output.forEach(line => {
+    setTimeout(() => {
+      const div = document.createElement("div");
+      div.className = "term-line";
+      
+      if (line.type === "cmd") {
+        div.innerHTML = `<span class="term-prompt">❯</span> <span class="term-cmd">${escapeHtml(line.text)}</span>`;
+      } else {
+        div.innerHTML = `<span class="term-${line.type}">${escapeHtml(line.text)}</span>`;
+      }
+      
+      terminal.appendChild(div);
+      terminal.scrollTop = terminal.scrollHeight;
+    }, delay);
+    delay += (line.type === "cmd" ? 100 : 200 + Math.random() * 300);
+  });
+}
+
+
 // ══════════ Tab switching ══════════
 function switchTab(tab) {
   state.activeTab = tab;
@@ -61,6 +210,7 @@ function switchTab(tab) {
 
   if (tab === "feed" && !state.feeds.fundamentals) loadAllFeeds();
   if (tab === "stack" && state.learning) renderStack();
+  if (tab === "playground") initPlayground();
   observeReveal();
 }
 
