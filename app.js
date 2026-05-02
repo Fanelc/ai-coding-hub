@@ -87,6 +87,7 @@ async function loadLearning() {
   state.learning = data;
   renderPath();
   renderModules();
+  renderUseCases();
   renderStack();
   renderGlossary();
   observeReveal();
@@ -129,7 +130,7 @@ function renderModules() {
   });
 
   root.innerHTML = tracks
-    .map((t) => {
+    .map((t, idx) => {
       const items = byTrack[t.id] || [];
       const cards = items
         .map((m) => {
@@ -151,7 +152,33 @@ function renderModules() {
           `;
         })
         .join("");
+
+      let phaseHtml = "";
+      if (idx === 0) {
+        phaseHtml = `
+          <div class="phase-header reveal">
+            <div class="phase-label">Phase 1</div>
+            <div class="phase-title">Foundations: From 0 to 1</div>
+          </div>
+        `;
+      } else if (idx === 3) {
+        phaseHtml = `
+          <div class="phase-header reveal">
+            <div class="phase-label">Phase 2</div>
+            <div class="phase-title">Building: Working with Agents</div>
+          </div>
+        `;
+      } else if (idx === 5) {
+        phaseHtml = `
+          <div class="phase-header reveal">
+            <div class="phase-label">Phase 3</div>
+            <div class="phase-title">Mastery: Production & Scale</div>
+          </div>
+        `;
+      }
+
       return `
+        ${phaseHtml}
         <section class="track-section reveal" data-track-section="${escapeAttr(t.id)}">
           <header class="track-header">
             <h2 class="track-title">${escapeHtml(t.label)}</h2>
@@ -166,6 +193,41 @@ function renderModules() {
   root.querySelectorAll(".module-card").forEach((card) => {
     card.addEventListener("click", () => openModuleSheet(+card.dataset.module));
   });
+}
+
+function renderUseCases() {
+  const root = document.getElementById("use-cases-section");
+  if (!root || !state.learning?.use_cases) return;
+  const cases = state.learning.use_cases;
+
+  const cards = cases.map(uc => `
+    <article class="module-card use-case-card reveal">
+      <div class="module-head">
+        <span class="module-chip">${escapeHtml(uc.difficulty)}</span>
+        <span class="module-chip">${escapeHtml(uc.time)}</span>
+      </div>
+      <h3 class="module-title">${escapeHtml(uc.title)}</h3>
+      <p class="module-why" style="margin-top: 8px;"><strong>Scenario:</strong> ${escapeHtml(uc.scenario)}</p>
+      <p class="module-why" style="margin-top: 8px;"><strong>Outcome:</strong> ${escapeHtml(uc.outcome)}</p>
+      <div class="module-meta" style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.1);">
+        <span>${escapeHtml(uc.stack.join(" · "))}</span>
+      </div>
+    </article>
+  `).join("");
+
+  root.innerHTML = `
+    <div class="phase-header reveal" style="margin-top: 80px;">
+      <div class="phase-label">Phase 4</div>
+      <div class="phase-title">Real-Life Use Cases: Putting it into Practice</div>
+    </div>
+    <section class="track-section reveal" style="margin-top: 20px;">
+      <header class="track-header">
+        <h2 class="track-title">Expert Solutions</h2>
+        <p class="track-blurb">Put the theory into practice with these ${cases.length} actionable recipes to get the most out of these new technologies.</p>
+      </header>
+      <div class="track-grid">${cards}</div>
+    </section>
+  `;
 }
 
 // ══════════ Stack tab ══════════
