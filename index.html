@@ -42,7 +42,6 @@
       <button class="nav-tab active" data-tab="read" role="tab">Read</button>
       <button class="nav-tab" data-tab="stack" role="tab">Stack</button>
       <button class="nav-tab" data-tab="feed" role="tab">Feed</button>
-      <button class="nav-tab" data-tab="playground" role="tab">Playground</button>
       <button class="nav-tab" data-tab="glossary" role="tab">Glossary</button>
     </nav>
   </header>
@@ -111,50 +110,6 @@
 
       <div class="feed-updated" id="feed-updated"></div>
       <div class="feed-grid" id="feed-grid"></div>
-    </section>
-
-    <!-- ════════════════════ PLAYGROUND ════════════════════ -->
-    <section id="view-playground" class="view hidden" role="tabpanel">
-      <section class="play-hero">
-        <div class="hero-kicker">Interactive environment</div>
-        <h2>AI Command<em> Playground</em></h2>
-        <p>Experiment with agentic CLI commands and prompt patterns in a simulated environment. Try the presets or type your own.</p>
-      </section>
-
-      <div class="play-container reveal">
-        <div class="play-sidebar">
-          <div class="play-sidebar-label">Command Library</div>
-          <div class="command-list" id="command-list">
-            <!-- Populated by JS -->
-          </div>
-        </div>
-        
-        <div class="play-main">
-          <div class="editor-wrap">
-            <div class="editor-head">
-              <span class="editor-dot red"></span>
-              <span class="editor-dot yellow"></span>
-              <span class="editor-dot green"></span>
-              <span class="editor-filename">prompt.md</span>
-            </div>
-            <textarea id="play-editor" spellcheck="false" placeholder="Write your prompt or code here..."></textarea>
-          </div>
-          
-          <div class="terminal-wrap">
-            <div class="terminal-head">
-              <span class="terminal-title">Terminal — zsh</span>
-              <button class="terminal-clear" id="play-clear">Clear</button>
-            </div>
-            <div class="terminal-body" id="play-terminal">
-              <div class="term-line"><span class="term-prompt">❯</span> Welcome to the AI Hub Playground. Select a command to begin.</div>
-            </div>
-            <div class="terminal-input-row">
-              <span class="term-prompt">❯</span>
-              <input type="text" id="play-input" placeholder="Type a command (e.g. 'claude-code --help')..." autocomplete="off">
-            </div>
-          </div>
-        </div>
-      </div>
     </section>
 
     <!-- ════════════════════ GLOSSARY ════════════════════ -->
